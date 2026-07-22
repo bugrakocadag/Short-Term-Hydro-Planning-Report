@@ -1,0 +1,2241 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Performans Analiz ve Rezervuar Takip Paneli</title>
+    <!-- Grafik, Etiket, Zoom ve Scroll Kütüphaneleri -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.0.0"></script>
+    <script src="https://cdn.jsdelivr.net/npm/hammerjs@2.0.8/hammer.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-zoom@2.0.1/dist/chartjs-plugin-zoom.min.js"></script>
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Manrope:wght@600;700;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #0f172a;
+            --primary-soft: #16213f;
+            --accent: #1b75bc;
+            --accent-dark: #145a92;
+            --accent-soft: #e8f1fa;
+            --bg: #eef2f6;
+            --card: #ffffff;
+            --text: #1e293b;
+            --muted: #64748b;
+            --border: #e2e8f0;
+            --radius: 12px;
+            --shadow-sm: 0 1px 2px rgba(15, 23, 42, 0.06), 0 1px 3px rgba(15, 23, 42, 0.04);
+            --shadow-md: 0 4px 12px rgba(15, 23, 42, 0.08), 0 1px 3px rgba(15, 23, 42, 0.06);
+        }
+
+        * { -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale; }
+
+        html, body {
+            max-width: 100%;
+            overflow-x: hidden;
+            background-color: var(--bg);
+            color: var(--text);
+            margin: 0;
+            padding: 0;
+            font-family: 'Inter', 'Segoe UI', system-ui, sans-serif;
+            font-size: 14px;
+            text-rendering: optimizeLegibility;
+            -webkit-text-size-adjust: 100%;
+        }
+
+        ::-webkit-scrollbar { height: 10px; width: 10px; }
+        ::-webkit-scrollbar-track { background: #eef2f6; border-radius: 20px; }
+        ::-webkit-scrollbar-thumb { background: #b9c5d3; border-radius: 20px; border: 2px solid #eef2f6; }
+        ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+        
+        .navbar {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-soft) 100%);
+            color: white;
+            padding: 18px 34px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-family: 'Manrope', 'Inter', sans-serif;
+            font-size: 16px;
+            font-weight: 700;
+            letter-spacing: 0.2px;
+            box-shadow: 0 2px 10px rgba(15, 23, 42, 0.18);
+            position: sticky;
+            top: 0;
+            z-index: 50;
+        }
+        .navbar span:first-child {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            min-width: 0;
+            flex: 1 1 auto;
+            overflow: hidden;
+            white-space: nowrap;
+            text-overflow: ellipsis;
+        }
+        .navbar span:first-child::before {
+            content: "";
+            display: inline-block;
+            width: 9px; height: 9px;
+            border-radius: 50%;
+            background: #38bdf8;
+            box-shadow: 0 0 0 4px rgba(56, 189, 248, 0.2);
+            flex-shrink: 0;
+        }
+        #liveClock {
+            font-weight: 500;
+            font-size: 13px;
+            color: #cbd5e1;
+            background: rgba(255,255,255,0.06);
+            padding: 6px 14px;
+            border-radius: 20px;
+            white-space: nowrap;
+            flex-shrink: 0;
+        }
+
+        .navbar-right {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            flex-shrink: 0;
+        }
+
+        .brand-logo {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 5px 16px 5px 6px;
+            border-radius: 999px;
+            background: rgba(255, 255, 255, 0.06);
+            border: 1px solid rgba(255, 255, 255, 0.14);
+            flex-shrink: 0;
+        }
+        .brand-logo-icon {
+            width: 32px;
+            height: 32px;
+            border-radius: 9px;
+            background: linear-gradient(145deg, #38bdf8 0%, var(--accent) 55%, var(--primary) 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 3px 10px rgba(56, 189, 248, 0.35), inset 0 1px 0 rgba(255,255,255,0.25);
+            flex-shrink: 0;
+        }
+        .brand-logo-icon svg { width: 18px; height: 18px; }
+        .brand-wordmark {
+            font-family: 'Manrope', sans-serif;
+            font-weight: 800;
+            font-size: 16px;
+            line-height: 1;
+            letter-spacing: 0.3px;
+            color: #ffffff;
+            white-space: nowrap;
+            flex-shrink: 0;
+        }
+        .brand-wordmark .brand-accent { color: #38bdf8; }
+        .brand-wordmark small {
+            display: block;
+            font-family: 'Inter', sans-serif;
+            font-weight: 600;
+            font-size: 9px;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            color: #93a3b8;
+            margin-top: 3px;
+            white-space: nowrap;
+        }
+        
+        .container {
+            max-width: 100%;
+            margin: 25px auto;
+            padding: 0 30px;
+            display: grid;
+            grid-template-columns: 240px 1fr;
+            gap: 22px;
+            box-sizing: border-box;
+        }
+        
+        .full-width { grid-column: span 2; }
+        
+        .upload-section {
+            background: var(--card);
+            padding: 18px 22px;
+            border-radius: var(--radius);
+            box-shadow: var(--shadow-sm);
+            border: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            position: relative;
+            overflow: hidden;
+            grid-column: 1 / -1;
+            width: 100%;
+            box-sizing: border-box;
+            flex-wrap: wrap;
+        }
+
+        .upload-group {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .hydro-emojis {
+            margin-left: auto;
+            display: flex;
+            align-items: center;
+            gap: 18px; 
+            font-size: 30px; 
+            flex-shrink: 0;
+        }
+        .hydro-emojis .static-emoji {
+            user-select: none;
+            filter: drop-shadow(0 2px 3px rgba(0,0,0,0.12));
+            display: inline-block;
+            transition: transform 0.2s ease;
+            cursor: pointer;
+        }
+
+        .emoji-mountain { animation: mountainSway 6s ease-in-out infinite alternate; }
+        .emoji-drop { animation: dropPulse 2.5s ease-in-out infinite; }
+        .emoji-wave { animation: waveSway 4s ease-in-out infinite; }
+        .emoji-lightning { animation: lightFlash 1.8s ease-in-out infinite; }
+        .emoji-lightning.lightning-paused { animation-play-state: paused; }
+
+        @keyframes mountainSway {
+            0% { transform: scale(1) rotate(0deg); }
+            100% { transform: scale(1.05) rotate(1deg); }
+        }
+        @keyframes dropPulse {
+            0% { transform: scale(1); filter: drop-shadow(0 2px 3px rgba(0,0,0,0.12)); }
+            50% { transform: scale(1.15) translateY(-2px); filter: drop-shadow(0 4px 6px rgba(27, 117, 188, 0.3)); }
+            100% { transform: scale(1); filter: drop-shadow(0 2px 3px rgba(0,0,0,0.12)); }
+        }
+        @keyframes waveSway {
+            0% { transform: translateX(0) scale(1); }
+            50% { transform: translateX(3px) scale(1.08) skewX(-3deg); }
+            100% { transform: translateX(0) scale(1); }
+        }
+        @keyframes lightFlash {
+            0%, 100% { transform: scale(1); filter: drop-shadow(0 2px 3px rgba(0,0,0,0.12)) brightness(1); }
+            50% { transform: scale(1.2) rotate(5deg); filter: drop-shadow(0 5px 8px rgba(250, 204, 21, 0.5)) brightness(1.3); }
+        }
+
+        .rain-stage {
+            position: relative;
+            width: 44px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            overflow: visible;
+        }
+        .rain-cloud {
+            font-size: 34px; 
+            line-height: 1;
+            user-select: none;
+            display: inline-block;
+            transition: transform 0.15s ease;
+            animation: cloudFloat 4s ease-in-out infinite alternate;
+        }
+        @keyframes cloudFloat {
+            0% { transform: translateY(0); }
+            100% { transform: translateY(-3px); }
+        }
+        .rain-stage:hover .rain-cloud { transform: scale(1.15) translateY(-3px); }
+        .rain-stage:active .rain-cloud { transform: scale(0.95); }
+
+        /* Tam ekran su/şimşek/damla efektleri — emoji tıklamalarıyla tetiklenir */
+        .water-stream {
+            position: fixed;
+            width: 8px;
+            border-radius: 6px;
+            background: linear-gradient(180deg, rgba(56,189,248,0.9), rgba(27,117,188,0.85));
+            box-shadow: 0 0 10px rgba(27,117,188,0.55);
+            pointer-events: none;
+            z-index: 9998;
+            height: 0;
+            opacity: 1;
+        }
+        .falling-drop {
+            position: fixed;
+            font-size: 22px;
+            line-height: 1;
+            pointer-events: none;
+            z-index: 9998;
+        }
+        .screen-flood {
+            position: fixed;
+            inset: 0;
+            pointer-events: none;
+            z-index: 9997;
+            background: linear-gradient(180deg, rgba(56,189,248,0.15) 0%, rgba(27,117,188,0.55) 55%, rgba(15,90,146,0.78) 100%);
+            transform: translateY(100%);
+            opacity: 0;
+        }
+        @keyframes floodRise {
+            0% { transform: translateY(100%); opacity: 0; }
+            12% { transform: translateY(0); opacity: 1; }
+            82% { transform: translateY(0); opacity: 1; }
+            100% { transform: translateY(-100%); opacity: 0; }
+        }
+        .lightning-flash {
+            position: fixed;
+            inset: 0;
+            pointer-events: none;
+            z-index: 9999;
+            background: radial-gradient(circle at 50% 15%, rgba(255,255,255,0.95), rgba(250,204,21,0.35) 40%, rgba(255,255,255,0) 70%);
+            animation: flashBurst 0.65s ease-out forwards;
+        }
+        @keyframes flashBurst {
+            0% { opacity: 0; }
+            8% { opacity: 1; }
+            22% { opacity: 0.15; }
+            32% { opacity: 0.9; }
+            100% { opacity: 0; }
+        }
+        .rain-puddle {
+            position: fixed;
+            bottom: 2px;
+            width: 150px;
+            height: 24px;
+            border-radius: 50%;
+            background: radial-gradient(ellipse at center, rgba(56,189,248,0.55), rgba(27,117,188,0.25) 70%, transparent 100%);
+            pointer-events: none;
+            z-index: 9998;
+            opacity: 0;
+            transition: opacity 0.5s ease;
+        }
+
+        .upload-btn {
+            background: linear-gradient(135deg, var(--accent) 0%, var(--accent-dark) 100%);
+            color: white;
+            padding: 12px 22px;
+            font-size: 13px;
+            font-weight: 700;
+            border-radius: 8px;
+            cursor: pointer;
+            border: none;
+            box-shadow: 0 2px 6px rgba(27, 117, 188, 0.3);
+            transition: transform 0.15s ease, box-shadow 0.15s ease;
+            white-space: nowrap;
+            flex-shrink: 0;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .upload-btn.input-btn {
+            background: linear-gradient(135deg, #10b981 0%, #047857 100%);
+            box-shadow: 0 2px 6px rgba(16, 185, 129, 0.3);
+        }
+        .upload-btn::before {
+            content: "";
+            width: 16px; height: 16px;
+            flex-shrink: 0;
+            background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M12 3v12'/%3E%3Cpath d='M7 8l5-5 5 5'/%3E%3Cpath d='M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2'/%3E%3C/svg%3E") no-repeat center / contain;
+        }
+        .upload-btn:hover { transform: translateY(-1px); box-shadow: 0 4px 10px rgba(27, 117, 188, 0.38); }
+        .upload-btn.input-btn:hover { box-shadow: 0 4px 10px rgba(16, 185, 129, 0.38); }
+        
+        .sidebar {
+            background: var(--card);
+            padding: 20px;
+            border-radius: var(--radius);
+            box-shadow: var(--shadow-sm);
+            border: 1px solid var(--border);
+            height: fit-content;
+            position: sticky;
+            top: 90px;
+        }
+        .sidebar h3 {
+            margin: 0 0 15px 0;
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 0.6px;
+            border-bottom: 2px solid var(--border);
+            padding-bottom: 10px;
+            color: var(--muted);
+            font-weight: 800;
+        }
+        .filter-group {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+        .filter-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-weight: 700;
+            cursor: pointer;
+            font-size: 14.5px;
+            padding: 9px 12px;
+            border-radius: 8px;
+            transition: background 0.15s ease, color 0.15s ease;
+            color: var(--text);
+        }
+        .filter-item:hover { background: var(--accent-soft); }
+        .filter-item:has(input:checked) { background: var(--accent-soft); color: var(--accent-dark); }
+        .filter-item input { width: 17px; height: 17px; accent-color: var(--accent); }
+
+        .time-filter-modes {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 6px;
+            margin-bottom: 10px;
+        }
+        .range-btn {
+            background: #eef2f6;
+            color: var(--muted);
+            border: 1px solid transparent;
+            padding: 8px 4px;
+            font-size: 11.5px;
+            font-weight: 700;
+            border-radius: 7px;
+            cursor: pointer;
+            transition: all 0.15s ease;
+        }
+        .range-btn:hover { background: var(--accent-soft); color: var(--accent-dark); }
+        .range-btn.active {
+            background: linear-gradient(135deg, var(--accent) 0%, var(--accent-dark) 100%);
+            color: white;
+            box-shadow: 0 2px 6px rgba(27, 117, 188, 0.28);
+        }
+        .range-select {
+            width: 100%;
+            box-sizing: border-box;
+            padding: 9px 10px;
+            border-radius: 8px;
+            border: 1px solid var(--border);
+            background: #ffffff;
+            color: var(--text);
+            font-family: 'Inter', sans-serif;
+            font-size: 12.5px;
+            font-weight: 600;
+            cursor: pointer;
+        }
+        .range-select:focus { outline: none; border-color: var(--accent); }
+
+        .main-content {
+            display: flex;
+            flex-direction: column;
+            gap: 25px;
+            min-width: 0;
+        }
+        
+        .tabs-container {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 5px;
+            overflow-x: auto;
+        }
+        .sub-tabs { display: flex; gap: 8px; margin-bottom: 15px; }
+
+        .tab-btn {
+            background-color: #ffffff;
+            color: var(--muted);
+            border: 1px solid var(--border);
+            padding: 11px 22px;
+            font-size: 13.5px;
+            font-weight: 700;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.15s ease;
+            white-space: nowrap;
+        }
+        .tab-btn:hover { border-color: var(--accent); color: var(--accent-dark); }
+        .tab-btn.active {
+            background: linear-gradient(135deg, var(--accent) 0%, var(--accent-dark) 100%);
+            color: white;
+            border-color: transparent;
+            box-shadow: 0 3px 8px rgba(27, 117, 188, 0.28);
+        }
+        
+        .sub-btn {
+            background-color: #eef2f6;
+            color: #475569;
+            border: 1px solid transparent;
+            padding: 8px 16px;
+            font-size: 12.5px;
+            font-weight: 700;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.15s ease;
+        }
+        .sub-btn:hover { background-color: #e2e8f0; }
+        .sub-btn.active { background-color: var(--primary); color: white; }
+
+        .inputs-summary-box {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 14px;
+            margin: 4px 0 20px 0;
+        }
+        .inputs-summary-tile {
+            flex: 1 1 160px;
+            background: var(--accent-soft);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 12px 18px;
+        }
+        .inputs-summary-tile .summary-label {
+            font-size: 10.5px;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 0.6px;
+            color: var(--muted);
+            margin-bottom: 4px;
+        }
+        .inputs-summary-tile .summary-value {
+            font-size: 18px;
+            font-weight: 800;
+            color: var(--accent-dark);
+        }
+
+        .view-panel { display: none; }
+        .view-panel.active { display: flex; flex-direction: column; gap: 22px; }
+        
+        .card {
+            background: var(--card);
+            padding: 24px 26px;
+            border-radius: var(--radius);
+            box-shadow: var(--shadow-sm);
+            border: 1px solid var(--border);
+            box-sizing: border-box;
+        }
+        
+        .card-title { 
+            font-size: 15px; 
+            font-weight: 700; 
+            color: var(--primary); 
+            margin: 0 0 18px 0; 
+            border-bottom: 1px solid var(--border); 
+            padding-bottom: 12px; 
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .card-title::before {
+            content: "";
+            width: 4px;
+            height: 15px;
+            border-radius: 2px;
+            background: var(--accent);
+            display: inline-block;
+        }
+
+        .chart-native-container {
+            width: 100%;
+            height: 520px;
+            position: relative;
+            background: #ffffff;
+            cursor: grab;
+        }
+        .chart-native-container:active {
+            cursor: grabbing;
+        }
+
+        .chart-scrollbar-wrapper {
+            margin-top: 15px;
+            padding: 0 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            border-top: 1px solid var(--border);
+            padding-top: 15px;
+        }
+        .chart-scrollbar-container {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        .chart-scrollbar-label {
+            font-size: 11px;
+            font-weight: 700;
+            color: var(--muted);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            white-space: nowrap;
+            width: 90px;
+        }
+        .chart-scrollbar-input {
+            flex: 1;
+            -webkit-appearance: none;
+            appearance: none;
+            height: 6px;
+            border-radius: 3px;
+            background: #e2e8f0;
+            outline: none;
+            cursor: pointer;
+            transition: background 0.15s ease;
+        }
+        .chart-scrollbar-input::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 40px;
+            height: 12px;
+            border-radius: 6px;
+            background: var(--accent);
+            box-shadow: 0 1px 3px rgba(0,0,0,0.15);
+            cursor: ew-resize;
+            transition: transform 0.1s ease, background 0.1s ease;
+        }
+        .chart-scrollbar-input::-webkit-slider-thumb:hover {
+            background: var(--accent-dark);
+            transform: scaleY(1.2);
+        }
+        .day-slider::-webkit-slider-thumb {
+            background: var(--primary);
+            width: 50px;
+        }
+        .day-slider::-webkit-slider-thumb:hover {
+            background: var(--primary-soft);
+        }
+        
+        /* Matris Tasarımları */
+        .matrix-container {
+            overflow-x: auto;
+            margin-bottom: 30px;
+            border-radius: 0 0 10px 10px;
+            border: 1px solid var(--border);
+            border-top: none;
+        }
+        .matrix-title-banner {
+            background: linear-gradient(135deg, var(--accent) 0%, var(--accent-dark) 100%);
+            color: white;
+            padding: 12px 15px;
+            font-weight: 700;
+            font-size: 13.5px;
+            text-align: center;
+            border-radius: 10px 10px 0 0;
+            letter-spacing: 0.4px;
+        }
+        table { width: 100%; border-collapse: collapse; text-align: center; }
+        th { background-color: #f1f5f9; color: var(--primary); padding: 10px; font-size: 11.5px; font-weight: 700; border: 1px solid #dbe2ea; position: sticky; top: 0; }
+        td { padding: 9px 10px; font-size: 12px; border: 1px solid #e7ecf2; font-weight: 600; line-height: 1.3; }
+        tbody tr:nth-child(even) td { background-color: #fafbfd; }
+        tbody tr:hover td { background-color: var(--accent-soft); }
+        .hour-header { background-color: #dde6ef; font-weight: 700; border: 1px solid #c9d4e0; }
+        .mode-lbl { font-size: 10px; color: #475569; font-weight: bold; display: block; margin-top: 2px; }
+        
+        .daily-avg-row td { background-color: #f8fafc; font-weight: 700; border-top: 2px solid #0f172a !important; border-bottom: 2px solid #0f172a !important; color: #0f172a; }
+        .daily-avg-header { background-color: #e2e8f0 !important; font-weight: 800 !important; border: 2px solid #0f172a !important; }
+        .block-avg-cell { background-color: #f8fafc; font-weight: 700; border-left: 2px solid #0f172a !important; border-right: 2px solid #0f172a !important; color: #0f172a; }
+        .block-avg-header { background-color: #e2e8f0 !important; font-weight: 800 !important; border: 2px solid #0f172a !important; }
+        .grand-total-cell { background-color: #cbd5e1 !important; font-weight: 800 !important; border: 2px solid #0f172a !important; color: #0f172a !important; }
+
+        .dashboard-layout { display: none; }
+        .standard-chart-wrapper { position: relative; height: 520px; width: 100%; }
+    </style>
+</head>
+<body>
+
+    <div class="navbar">
+        <span>Santral Performans ve Rezervuar Takip Paneli</span>
+        <div class="navbar-right">
+            <span id="liveClock"></span>
+            <div class="brand-logo">
+                <span class="brand-logo-icon">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M13 2 4 14h6l-1 8 9-12h-6l1-8Z" fill="white" fill-opacity="0.18"/>
+                    </svg>
+                </span>
+                <span class="brand-wordmark">GÖP<span class="brand-accent">-Dispatch</span><small>Hidro Planlama</small></span>
+            </div>
+        </div>
+    </div>
+
+    <div class="container full-width">
+        <div class="upload-section">
+            <div class="upload-group">
+                <label for="csvFile" class="upload-btn">Results.csv Yükle</label>
+                <input type="file" id="csvFile" accept=".csv" style="display:none;" onchange="handleFile(this)">
+                <span id="fileNameDisplay" style="font-size: 13px; color: #475569; font-weight: 600;">Please load Results.csv</span>
+            </div>
+            
+            <div class="upload-group">
+                <label for="inputFile" class="upload-btn input-btn">Input Dosyası Yükle (LBO/WHBO)</label>
+                <input type="file" id="inputFile" accept=".csv" style="display:none;" onchange="handleInputFile(this)">
+                <span id="inputFileNameDisplay" style="font-size: 13px; color: #475569; font-weight: 600;">Opsiyonel Girdi Gerekli</span>
+            </div>
+
+            <div class="hydro-emojis">
+                <span class="static-emoji emoji-mountain" title="Rezervuar" onclick="triggerMountainFlow(this)">🏔️</span>
+                <span class="static-emoji emoji-drop" title="Su" onclick="triggerDropFall(this)">💧</span>
+                <span class="static-emoji emoji-wave" title="Akış" onclick="triggerFlood()">🌊</span>
+                <span class="static-emoji emoji-lightning" title="Üretim" onclick="triggerLightningFlash(this)">⚡</span>
+                <span class="rain-stage" id="rainStage" onclick="triggerRain()" title="Yağmur yağdır!">
+                    <span class="rain-cloud">☁️</span>
+                </span>
+            </div>
+        </div>
+    </div>
+
+    <div id="dashboardLayout" class="container dashboard-layout">
+        <!-- Sol Menü -->
+        <div class="sidebar">
+            <h3>Santral Seçimi (PP)</h3>
+            <div id="filterGroup" class="filter-group"></div>
+
+            <h3 style="margin-top: 22px;">Zaman Aralığı</h3>
+            <div class="time-filter-modes">
+                <button type="button" id="btnRangeAll" class="range-btn active" onclick="setFilterMode('all')">Tümü</button>
+                <button type="button" id="btnRangeDay" class="range-btn" onclick="setFilterMode('day')">Günlük</button>
+                <button type="button" id="btnRangeWeek" class="range-btn" onclick="setFilterMode('week')">Haftalık</button>
+            </div>
+            <select id="daySelect" class="range-select" style="display:none;" onchange="onDaySelectChange(this.value)"></select>
+            <select id="weekSelect" class="range-select" style="display:none;" onchange="onWeekSelectChange(this.value)"></select>
+        </div>
+
+        <!-- Sağ İçerik Alanı -->
+        <div class="main-content">
+            
+            <!-- Ana Görünüm Sekmeleri -->
+            <div class="tabs-container">
+                <button id="btnGraphView" class="tab-btn active" onclick="switchView('graph')">Grafik Görünümü</button>
+                <button id="btnReservoirView" class="tab-btn" onclick="switchView('reservoir')">Reservoir Level</button>
+                <button id="btnCaughtMissedView" class="tab-btn" onclick="switchView('caughtmissed')">Caught-Missed Eff. Prices</button>
+                <button id="btnMatrixView" class="tab-btn" onclick="switchView('matrix')">Veri Matrisi (Tablo)</button>
+                <button id="btnInputsView" class="tab-btn" onclick="switchView('inputs')">Inputs</button>
+            </div>
+
+            <!-- PANEL 1: GRAFİKLER -->
+            <div id="panelGraphs" class="view-panel active">
+                <div class="card">
+                    <div id="graphTitle" class="card-title">-</div>
+                    <div class="chart-native-container">
+                        <canvas id="kndChart"></canvas>
+                    </div>
+                    <div class="chart-scrollbar-wrapper">
+                        <div class="chart-scrollbar-container">
+                            <span class="chart-scrollbar-label">Saatlik Akış</span>
+                            <input type="range" id="kndChartScrollbar" class="chart-scrollbar-input" min="0" value="0">
+                        </div>
+                        <div class="chart-scrollbar-container">
+                            <span class="chart-scrollbar-label">Günlük Atlama</span>
+                            <input type="range" id="kndChartDayScrollbar" class="chart-scrollbar-input day-slider" min="0" value="0">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div id="graphTitleFirstDay" class="card-title">-</div>
+                    <div class="chart-native-container">
+                        <canvas id="firstDayChart"></canvas>
+                    </div>
+                    <div class="chart-scrollbar-wrapper">
+                        <div class="chart-scrollbar-container">
+                            <span class="chart-scrollbar-label">Saatlik Akış</span>
+                            <input type="range" id="firstDayChartScrollbar" class="chart-scrollbar-input" min="0" value="0">
+                        </div>
+                        <div class="chart-scrollbar-container">
+                            <span class="chart-scrollbar-label">Günlük Atlama</span>
+                            <input type="range" id="firstDayChartDayScrollbar" class="chart-scrollbar-input day-slider" min="0" value="0">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-title">Blok Bazlı Dağılım Profili (Üretim Hacim Ağırlıklı Efektif Fiyat)</div>
+                    <div class="chart-native-container">
+                        <canvas id="blockChart"></canvas>
+                    </div>
+                    <div class="chart-scrollbar-wrapper">
+                        <div class="chart-scrollbar-container">
+                            <span class="chart-scrollbar-label">Hassas Akış</span>
+                            <input type="range" id="blockChartScrollbar" class="chart-scrollbar-input" min="0" value="0">
+                        </div>
+                        <div class="chart-scrollbar-container">
+                            <span class="chart-scrollbar-label">Blok Atlama</span>
+                            <input type="range" id="blockChartDayScrollbar" class="chart-scrollbar-input day-slider" min="0" value="0">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-title">Günlük Dağılım Profili (Üretim Hacim Ağırlıklı Efektif Fiyat)</div>
+                    <div class="standard-chart-wrapper">
+                        <canvas id="dailyChart"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <!-- PANEL 2: REZERVOAR SEKMESİ -->
+            <div id="panelReservoir" class="view-panel">
+                <div class="card">
+                    <div id="resTitleHourly" class="card-title">-</div>
+                    <div class="chart-native-container">
+                        <canvas id="resHourlyChart"></canvas>
+                    </div>
+                    <div class="chart-scrollbar-wrapper">
+                        <div class="chart-scrollbar-container">
+                            <span class="chart-scrollbar-label">Saatlik Akış</span>
+                            <input type="range" id="resHourlyChartScrollbar" class="chart-scrollbar-input" min="0" value="0">
+                        </div>
+                        <div class="chart-scrollbar-container">
+                            <span class="chart-scrollbar-label">Günlük Atlama</span>
+                            <input type="range" id="resHourlyChartDayScrollbar" class="chart-scrollbar-input day-slider" min="0" value="0">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div id="resTitleDaily" class="card-title">-</div>
+                    <div class="standard-chart-wrapper">
+                        <canvas id="resDailyChart"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <!-- PANEL 3: CAUGHT-MISSED MATRIS ALANI -->
+            <div id="panelCaughtMissed" class="view-panel">
+                <div class="card">
+                    <div id="matrix1-banner" class="matrix-title-banner">-</div>
+                    <div class="matrix-container">
+                        <table id="caughtMatrixTable"></table>
+                    </div>
+
+                    <div id="matrix2-banner" class="matrix-title-banner">-</div>
+                    <div class="matrix-container">
+                        <table id="missedMatrixTable"></table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- PANEL 4: VERİ MATRİSİ TABLOSU -->
+            <div id="panelMatrix" class="view-panel">
+                <div class="card">
+                    <div class="sub-tabs">
+                        <button id="btnSubHourly" class="sub-btn active" onclick="switchTableBreakdown('hourly')">Saatlik Görünüm (İlk Gün)</button>
+                        <button id="btnSubBlock" class="sub-btn" onclick="switchTableBreakdown('block')">Blok Bazlı Özet</button>
+                        <button id="btnSubDaily" class="sub-btn" onclick="switchTableBreakdown('daily')">Günlük Özet</button>
+                    </div>
+                    <div id="matrixTitle" class="card-title">-</div>
+                    <div style="overflow-x: auto;">
+                        <table id="matrixTable">
+                            <thead id="table-head"></thead>
+                            <tbody id="table-body"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- PANEL 5: INPUTS SEKMESİ -->
+            <div id="panelInputs" class="view-panel">
+                <div class="card">
+                    <div class="sub-tabs">
+                        <button id="btnInputLBO" class="sub-btn active" onclick="switchInputTab('LBO')">LBO Girdileri</button>
+                        <button id="btnInputWHBO" class="sub-btn" onclick="switchInputTab('WHBO')">WHBO Girdileri</button>
+                        <span style="flex: 1 1 auto;"></span>
+                        <button id="btnGranDaily" class="sub-btn active" onclick="switchInputGranularity('daily')">Günlük</button>
+                        <button id="btnGranHourly" class="sub-btn" onclick="switchInputGranularity('hourly')">Saatlik</button>
+                    </div>
+                    <div class="card-title" id="inputsTitle">LBO Optimizasyon Girdileri</div>
+
+                    <div id="inputsSummaryBox" class="inputs-summary-box"></div>
+
+                    <div style="overflow-x: auto;">
+                        <table id="inputsTable">
+                            <thead id="inputs-table-head"></thead>
+                            <tbody id="inputs-table-body"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <script>
+        let allData = [];       
+        let rawData = [];       
+        let firstDayData = [];
+        let inputFileData = []; // Yeni eklenen input dosya verisi havuzu
+        let activePp = "KND";
+        let activeTableTab = "hourly";
+        let activeInputTab = "LBO";
+        let inputsGranularity = "daily";
+        let filterMode = "all"; 
+        let selectedDate = null;
+        let selectedWeekKey = null;
+        const sabitSantraller = ['ARK', 'KND', 'KPR', 'KVB', 'MNG', 'SRG'];
+        
+        const limits = {
+            "KND": { min: 1064, max: 1097 },
+            "SRG": { min: 840, max: 868 },
+            "MNG": { min: 470, max: 480 },
+            "KPR": { min: 390, max: 410 },
+            "KVB": { min: 312, max: 318 },
+            "ARK": { min: 870, max: 935 }
+        };
+
+        const plantCapacities = {
+            "KND": 112, "SRG": 132, "MNG": 70, "KPR": 107, "KVB": 92, "ARK": 100
+        };
+
+        const embeddedRatios = {
+            "KND": 72 / 112, "SRG": 32 / 132, "MNG": 24 / 70, "KPR": 47 / 107, "KVB": 32 / 92, "ARK": 30 / 100
+        };
+
+        let chart1 = null, chart1_FD = null, chart2 = null, chart3 = null;
+        let chartResH = null, chartResD = null;
+        
+        Chart.register(ChartDataLabels);
+
+        // Dağ ikonuna tıklayınca: dağın içinden bir su akışı çıkıp ekranın en altına
+        // kadar iner ve orada söner.
+        function triggerMountainFlow(el) {
+            const rect = el.getBoundingClientRect();
+            const startX = rect.left + rect.width / 2;
+            const startY = rect.top + rect.height * 0.55;
+            const distance = Math.max(0, window.innerHeight - startY);
+
+            const stream = document.createElement('div');
+            stream.className = 'water-stream';
+            stream.style.left = (startX - 4) + 'px';
+            stream.style.top = startY + 'px';
+            document.body.appendChild(stream);
+
+            requestAnimationFrame(() => {
+                stream.style.transition = 'height 1.3s linear';
+                stream.style.height = distance + 'px';
+            });
+
+            setTimeout(() => {
+                stream.style.transition = 'opacity 0.45s ease';
+                stream.style.opacity = '0';
+                setTimeout(() => stream.remove(), 480);
+            }, 1300);
+        }
+
+        // Damla ikonuna tıklayınca: damla en aşağıya kadar düşer ve orada patlar.
+        function triggerDropFall(el) {
+            const rect = el.getBoundingClientRect();
+            const startX = rect.left + rect.width / 2 - 11;
+            const startY = rect.top;
+            const targetTop = Math.max(startY, window.innerHeight - 26);
+
+            const drop = document.createElement('span');
+            drop.className = 'falling-drop';
+            drop.textContent = '💧';
+            drop.style.left = startX + 'px';
+            drop.style.top = startY + 'px';
+            document.body.appendChild(drop);
+
+            requestAnimationFrame(() => {
+                drop.style.transition = 'top 1.1s linear';
+                drop.style.top = targetTop + 'px';
+            });
+
+            setTimeout(() => {
+                drop.style.transition = 'transform 0.3s ease, opacity 0.3s ease';
+                drop.style.transform = 'scale(2.6)';
+                drop.style.opacity = '0';
+            }, 1100);
+
+            setTimeout(() => drop.remove(), 1500);
+        }
+
+        // Dalga (şelale) ikonuna tıklayınca: ekranı 3 saniyeliğine su bassın.
+        function triggerFlood() {
+            const flood = document.createElement('div');
+            flood.className = 'screen-flood';
+            flood.style.animation = 'floodRise 3s ease-in-out forwards';
+            document.body.appendChild(flood);
+            setTimeout(() => flood.remove(), 3050);
+        }
+
+        // Şimşek ikonuna tıklayınca: ikonun kendi salınım animasyonu duraklar,
+        // ekranda kısa bir şimşek çakması efekti oynar, sonra animasyon devam eder.
+        function triggerLightningFlash(el) {
+            el.classList.add('lightning-paused');
+            const flash = document.createElement('div');
+            flash.className = 'lightning-flash';
+            document.body.appendChild(flash);
+            setTimeout(() => {
+                flash.remove();
+                el.classList.remove('lightning-paused');
+            }, 650);
+        }
+
+        // Bulut ikonuna tıklayınca: yağmur damlaları ekranın en altına kadar iner,
+        // küçük bir göl(cük) oluşturur; göl 3 saniye sonra kaybolur.
+        let rainActive = false;
+        function triggerRain() {
+            if (rainActive) return;
+            rainActive = true;
+            const stage = document.getElementById('rainStage');
+            const rect = stage.getBoundingClientRect();
+            const cloudX = rect.left + rect.width / 2;
+            const cloudTop = rect.top + rect.height * 0.7;
+            const groundY = window.innerHeight - 6;
+
+            const dropCount = 14;
+            let maxArrival = 0;
+
+            for (let i = 0; i < dropCount; i++) {
+                const drop = document.createElement('span');
+                drop.className = 'falling-drop';
+                drop.style.fontSize = '15px';
+                drop.textContent = '💧';
+                const offsetX = Math.random() * 40 - 20;
+                const startY = cloudTop + Math.random() * 6;
+                drop.style.left = (cloudX + offsetX - 7) + 'px';
+                drop.style.top = startY + 'px';
+                document.body.appendChild(drop);
+
+                const delay = Math.random() * 1.4;
+                const duration = 0.9 + Math.random() * 0.7;
+                maxArrival = Math.max(maxArrival, delay + duration);
+
+                setTimeout(() => {
+                    requestAnimationFrame(() => {
+                        drop.style.transition = `top ${duration}s linear`;
+                        drop.style.top = groundY + 'px';
+                    });
+                }, delay * 1000);
+
+                setTimeout(() => {
+                    drop.style.transition = 'opacity 0.25s ease';
+                    drop.style.opacity = '0';
+                }, (delay + duration) * 1000);
+
+                setTimeout(() => drop.remove(), (delay + duration) * 1000 + 300);
+            }
+
+            const puddleDelay = maxArrival * 1000 + 150;
+            setTimeout(() => {
+                const puddle = document.createElement('div');
+                puddle.className = 'rain-puddle';
+                puddle.style.left = (cloudX - 75) + 'px';
+                document.body.appendChild(puddle);
+                requestAnimationFrame(() => { puddle.style.opacity = '1'; });
+
+                setTimeout(() => {
+                    puddle.style.opacity = '0';
+                    setTimeout(() => puddle.remove(), 500);
+                }, 3000);
+            }, puddleDelay);
+
+            setTimeout(() => {
+                rainActive = false;
+            }, puddleDelay + 3000 + 600);
+        }
+
+        function convertToMeters(val, pp) {
+            if (val === "" || val === null || isNaN(val)) return 0;
+            const x = parseFloat(val);
+            if (pp === "KND") {
+                return (Math.pow(x,5) * 2.8381584414934E-12) + (Math.pow(x,4) * -3.10001903990673E-09) + (Math.pow(x,3) * 1.42927062693635E-06) + (Math.pow(x,2) * -0.000427800024767421) + (x * 0.164655672294339) + 1064.08648573883;
+            } else if (pp === "SRG") {
+                return (Math.pow(x,5) * 2.11999733076749E-08) + (Math.pow(x,4) * -3.97078417845591E-06) + (Math.pow(x,3) * 0.000283425552897885) + (Math.pow(x,2) * -0.0138284218747723) + (x * 1.01210021202081) + 839.984205588063;
+            } else if (pp === "MNG") {
+                return (Math.pow(x,5) * 2.60375649038741E-08) + (Math.pow(x,4) * -2.54845647396324E-06) + (Math.pow(x,3) * 0.000136321850604533) + (Math.pow(x,2) * -0.0068163873869646) + (x * 0.538245884377971) + 470.013621638601;
+            } else if (pp === "KPR") {
+                return (Math.pow(x,5) * 2.53516307403132E-09) + (Math.pow(x,4) * -5.03656268224846E-07) + (Math.pow(x,3) * 0.0000505535842842515) + (Math.pow(x,2) * -0.00423528296090004) + (x * 0.551105470656645) + 390.000423714564;
+            } else if (pp === "KVB") {
+                return (Math.pow(x,5) * 4.13981404083345E-11) + (Math.pow(x,4) * -7.82217776743812E-10) + (Math.pow(x,3) * -3.30463398404361E-06) + (Math.pow(x,2) * 0.0000375093183506369) + (x * 0.793766288747795) + 312;
+            } else if (pp === "ARK") {
+                return (Math.pow(x,5) * 4.99659847872576E-11) + (Math.pow(x,4) * -3.72015350964383E-08) + (Math.pow(x,3) * 0.0000115737754452693) + (Math.pow(x,2) * -0.00221834431427558) + (x * 0.483532810620019) + 871.595349093124;
+            }
+            return 0;
+        }
+
+        // Ham LBO/WHBO girdi CSV'sinde "Date" kolonu Excel seri tarih sayısıdır
+        // (Python tarafında pd.to_datetime(x, unit="D", origin="1899-12-30") ile aynı taban).
+        function excelSerialToDate(serial) {
+            const n = parseFloat(serial);
+            if (isNaN(n)) return null;
+            const ms = Date.UTC(1899, 11, 30) + Math.round(n) * 86400000;
+            return new Date(ms);
+        }
+
+        function formatDateFull(d) {
+            if (!d) return '';
+            const dd = String(d.getUTCDate()).padStart(2, '0');
+            const mm = String(d.getUTCMonth() + 1).padStart(2, '0');
+            const yy = d.getUTCFullYear();
+            return `${dd}.${mm}.${yy}`;
+        }
+
+        // Girdi satırının kısa (dd.mm.yyyy) tarihini döner. Ham girdi dosyasında Excel seri
+        // sayısını çevirir; Results.csv'de tarih zaten "dd.mm.yyyy" metni olarak gelir.
+        function getInputRowDateStr(row, isRawInput) {
+            const raw = row['Date'] || row['date'] || '';
+            if (!raw) return '';
+            if (isRawInput) {
+                const d = excelSerialToDate(raw);
+                return d ? formatDateFull(d) : String(raw);
+            }
+            return String(raw);
+        }
+
+        function getInputRowTimestamp(dateStr, hour) {
+            const d = parseFlexibleDate(dateStr);
+            if (!d) return 0;
+            const h = parseFloat(hour) || 0;
+            return d.getTime() + h * 3600000;
+        }
+
+        function parseCSV(text) {
+            const lines = text.split('\n').map(line => line.trim()).filter(line => line.length > 0);
+            if (lines.length < 2) return [];
+            const headers = lines[0].split(',').map(h => h.trim());
+            return lines.slice(1).map(line => {
+                const values = line.split(',').map(v => v.trim());
+                return headers.reduce((obj, header, index) => {
+                    obj[header] = values[index];
+                    return obj;
+                }, {});
+            });
+        }
+
+        function parseFlexibleDate(str) {
+            if (!str) return null;
+            str = str.trim();
+            if (str.includes('.')) {
+                const parts = str.split('.');
+                if (parts.length === 3) {
+                    const d = parseInt(parts[0], 10), m = parseInt(parts[1], 10), y = parseInt(parts[2], 10);
+                    if (!isNaN(d) && !isNaN(m) && !isNaN(y)) return new Date(y, m - 1, d);
+                }
+            }
+            const dt = new Date(str);
+            return isNaN(dt.getTime()) ? null : dt;
+        }
+
+        function formatDateShort(d) {
+            if (!d) return '';
+            const dd = String(d.getDate()).padStart(2, '0');
+            const mm = String(d.getMonth() + 1).padStart(2, '0');
+            return `${dd}.${mm}`;
+        }
+
+        function getWeekKey(dateStr) {
+            const d = parseFlexibleDate(dateStr);
+            if (!d) return 'unknown';
+            const tmp = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));
+            const dayNum = (tmp.getUTCDay() + 6) % 7; 
+            tmp.setUTCDate(tmp.getUTCDate() - dayNum + 3);
+            const firstThursday = new Date(Date.UTC(tmp.getUTCFullYear(), 0, 4));
+            const week = 1 + Math.round(((tmp - firstThursday) / 86400000 - 3 + ((firstThursday.getUTCDay() + 6) % 7)) / 7);
+            return `${tmp.getUTCFullYear()}-W${String(week).padStart(2, '0')}`;
+        }
+
+        function buildTimeFilterOptions() {
+            const uniqueDates = [...new Set(allData.map(r => r['Date'] || r['date'] || ''))].filter(Boolean);
+            uniqueDates.sort((a, b) => {
+                const da = parseFlexibleDate(a), db = parseFlexibleDate(b);
+                if (!da || !db) return a.localeCompare(b);
+                return da - db;
+            });
+
+            const daySelect = document.getElementById('daySelect');
+            daySelect.innerHTML = uniqueDates.map(d => `<option value="${d}">${d}</option>`).join('');
+            selectedDate = uniqueDates.length > 0 ? uniqueDates[0] : null;
+
+            const weekMap = {};
+            uniqueDates.forEach(d => {
+                const key = getWeekKey(d);
+                if (!weekMap[key]) weekMap[key] = [];
+                weekMap[key].push(d);
+            });
+            const weekKeys = Object.keys(weekMap).sort();
+            const weekSelect = document.getElementById('weekSelect');
+            weekSelect.innerHTML = weekKeys.map(k => {
+                const datesInWeek = weekMap[k];
+                const first = parseFlexibleDate(datesInWeek[0]);
+                const last = parseFlexibleDate(datesInWeek[datesInWeek.length - 1]);
+                const label = `${formatDateShort(first)} - ${formatDateShort(last)}`;
+                return `<option value="${k}">${label}</option>`;
+            }).join('');
+            selectedWeekKey = weekKeys.length > 0 ? weekKeys[0] : null;
+        }
+
+        function applyTimeFilter() {
+            if (filterMode === 'day' && selectedDate) {
+                rawData = allData.filter(row => (row['Date'] || row['date']) === selectedDate);
+            } else if (filterMode === 'week' && selectedWeekKey) {
+                rawData = allData.filter(row => getWeekKey(row['Date'] || row['date'] || '') === selectedWeekKey);
+            } else {
+                rawData = allData.slice();
+            }
+            if (rawData.length > 0) {
+                const firstDate = rawData[0]['Date'] || rawData[0]['date'] || '';
+                firstDayData = rawData.filter(row => (row['Date'] || row['date']) === firstDate);
+            } else {
+                firstDayData = [];
+            }
+        }
+
+        function setFilterMode(mode) {
+            filterMode = mode;
+            ['btnRangeAll', 'btnRangeDay', 'btnRangeWeek'].forEach(id => document.getElementById(id).classList.remove('active'));
+            document.getElementById('btnRange' + mode.charAt(0).toUpperCase() + mode.slice(1)).classList.add('active');
+            document.getElementById('daySelect').style.display = mode === 'day' ? 'block' : 'none';
+            document.getElementById('weekSelect').style.display = mode === 'week' ? 'block' : 'none';
+            applyTimeFilter();
+            if (allData.length > 0) updateDashboard();
+        }
+
+        function onDaySelectChange(val) {
+            selectedDate = val;
+            applyTimeFilter();
+            updateDashboard();
+        }
+
+        function onWeekSelectChange(val) {
+            selectedWeekKey = val;
+            applyTimeFilter();
+            updateDashboard();
+        }
+
+        function handleFile(input) {
+            const file = input.files[0];
+            if (!file) return;
+            document.getElementById('fileNameDisplay').innerText = file.name;
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                allData = parseCSV(e.target.result);
+                filterMode = 'all';
+                selectedDate = null;
+                selectedWeekKey = null;
+                ['btnRangeAll', 'btnRangeDay', 'btnRangeWeek'].forEach(id => document.getElementById(id).classList.remove('active'));
+                document.getElementById('btnRangeAll').classList.add('active');
+                document.getElementById('daySelect').style.display = 'none';
+                document.getElementById('weekSelect').style.display = 'none';
+                buildTimeFilterOptions();
+                applyTimeFilter();
+                buildSidebarFilters();
+            };
+            reader.readAsText(file, 'UTF-8');
+        }
+
+        // --- INPUTS SAYFASI İÇİN YENİ DOSYA OKUMA MOTORU ---
+        function handleInputFile(input) {
+            const file = input.files[0];
+            if (!file) return;
+            document.getElementById('inputFileNameDisplay').innerText = file.name;
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                inputFileData = parseCSV(e.target.result);
+                renderInputsTable();
+            };
+            reader.readAsText(file, 'UTF-8');
+        }
+
+        function buildSidebarFilters() {
+            const filterGroup = document.getElementById('filterGroup');
+            filterGroup.innerHTML = "";
+            sabitSantraller.forEach(pp => {
+                const label = document.createElement('label');
+                label.className = "filter-item";
+                label.innerHTML = `<input type="radio" name="ppSelect" value="${pp}" ${pp === activePp ? 'checked' : ''} onchange="changePp('${pp}')"> ${pp}`;
+                filterGroup.appendChild(label);
+            });
+            document.getElementById('dashboardLayout').style.display = 'grid';
+            changePp(activePp);
+        }
+
+        function changePp(ppName) {
+            activePp = ppName;
+            document.getElementById('graphTitle').innerText = `${activePp} Saatlik Performans Projeksiyonu`;
+            document.getElementById('graphTitleFirstDay').innerText = `${activePp} Saatlik Performans Projeksiyonu (İlk Gün)`;
+            document.getElementById('resTitleHourly').innerText = `${activePp} Rezervuar Seviye Takibi (Metre Ekseni)`;
+            document.getElementById('resTitleDaily').innerText = `${activePp} Günlük H23 Sonu Rezervuar Eğrisi`;
+            document.getElementById('matrixTitle').innerText = `${activePp} Detaylı Model Veri Matrisi`;
+            
+            document.getElementById('matrix1-banner').innerText = `${activePp} Caught Effective Prices (Çalışılan Bloklar - TL/MWh)`;
+            document.getElementById('matrix2-banner').innerText = `${activePp} Missed Effective Prices (Çalışılmayan Bloklar - TL/MWh)`;
+            
+            updateDashboard();
+        }
+
+        const VIEW_ID_MAP = {
+            graph: { btn: 'btnGraphView', panel: 'panelGraphs' },
+            reservoir: { btn: 'btnReservoirView', panel: 'panelReservoir' },
+            caughtmissed: { btn: 'btnCaughtMissedView', panel: 'panelCaughtMissed' },
+            matrix: { btn: 'btnMatrixView', panel: 'panelMatrix' },
+            inputs: { btn: 'btnInputsView', panel: 'panelInputs' }
+        };
+
+        function switchView(viewType) {
+            Object.values(VIEW_ID_MAP).forEach(v => {
+                document.getElementById(v.btn).classList.remove('active');
+                document.getElementById(v.panel).classList.remove('active');
+            });
+
+            const target = VIEW_ID_MAP[viewType];
+            document.getElementById(target.btn).classList.add('active');
+            document.getElementById(target.panel).classList.add('active');
+        }
+
+        function switchTableBreakdown(tabType) {
+            activeTableTab = tabType;
+            ['btnSubHourly', 'btnSubBlock', 'btnSubDaily'].forEach(id => document.getElementById(id).classList.remove('active'));
+            document.getElementById('btnSub' + tabType.charAt(0).toUpperCase() + tabType.slice(1)).classList.add('active');
+            renderSelectedTable();
+        }
+
+        function switchInputTab(mode) {
+            activeInputTab = mode;
+            document.getElementById('btnInputLBO').classList.remove('active');
+            document.getElementById('btnInputWHBO').classList.remove('active');
+            if (mode === 'LBO') {
+                document.getElementById('btnInputLBO').classList.add('active');
+                document.getElementById('inputsTitle').innerText = "LBO Optimizasyon Girdileri";
+            } else {
+                document.getElementById('btnInputWHBO').classList.add('active');
+                document.getElementById('inputsTitle').innerText = "WHBO Optimizasyon Girdileri";
+            }
+            renderInputsTable();
+        }
+
+        function switchInputGranularity(mode) {
+            inputsGranularity = mode;
+            document.getElementById('btnGranDaily').classList.toggle('active', mode === 'daily');
+            document.getElementById('btnGranHourly').classList.toggle('active', mode === 'hourly');
+            renderInputsTable();
+        }
+
+        function getSantralProduction(row, pp) {
+            let total = parseFloat(row[pp]) || 0;
+            if (pp === "SRG") {
+                total += (parseFloat(row["HCO"]) || parseFloat(row["hco"]) || 0);
+            } else if (pp === "MNG") {
+                total += (parseFloat(row["KSK"]) || parseFloat(row["ksk"]) || 0);
+            }
+            return total;
+        }
+
+        function calculateDynamicEffPrice(row, pp) {
+            const ptf = parseFloat(row['PTF']) || parseFloat(row['ptf']) || 0;
+            const sfcPrice = parseFloat(row['SFC_PRICE']) || parseFloat(row['sfc_price']) || 0;
+            const sfcQtyKey = pp + '_SFC';
+            let sfcQty = parseFloat(row[sfcQtyKey]);
+            const capacity = plantCapacities[pp] || 100; 
+
+            let sfcContribution = 0;
+            if (!isNaN(sfcQty)) {
+                sfcContribution = sfcPrice * (sfcQty / capacity);
+            } else {
+                const ratio = embeddedRatios[pp] || 0;
+                sfcContribution = sfcPrice * ratio;
+            }
+            return ptf + sfcContribution;
+        }
+
+        function updateDashboard() {
+            try {
+                let saatlerAll = [], kndAll = [], ptfAll = [], sfcAll = [], effAll = [];
+                let saatlerFD = [], kndFD = [], ptfFD = [], sfcFD = [], effFD = [];
+                let resHoursLabels = [], resHoursMeters = [], resHoursData = [];
+                let resDailyLabels = [], resDailyMeters = [], resDailyData = [];
+
+                rawData.forEach(row => {
+                    const d = row['Date'] || row['date'] || '';
+                    const h = row['Hour'] || row['hour'] || '0';
+                    const label = `${d} H${h}`;
+                    
+                    const prod = getSantralProduction(row, activePp);
+                    const dynEffPrice = calculateDynamicEffPrice(row, activePp);
+
+                    saatlerAll.push(label);
+                    kndAll.push(prod);
+                    ptfAll.push(parseFloat(row['PTF']) || 0);
+                    sfcAll.push(parseFloat(row['SFC_PRICE']) || 0);
+                    effAll.push(dynEffPrice);
+
+                    const levelKey = activePp + '_Level';
+                    const rawLevel = parseFloat(row[levelKey]) || 0;
+                    const calculatedMeter = convertToMeters(rawLevel, activePp);
+                    
+                    resHoursLabels.push(label);
+                    resHoursData.push(rawLevel);
+                    resHoursMeters.push(calculatedMeter);
+
+                    if (h.toString() === '23') {
+                        resDailyLabels.push(d);
+                        resDailyData.push(rawLevel);
+                        resDailyMeters.push(calculatedMeter);
+                    }
+                });
+
+                firstDayData.forEach(row => {
+                    const d = row['Date'] || row['date'] || '';
+                    const h = row['Hour'] || row['hour'] || '0';
+                    const prod = getSantralProduction(row, activePp);
+                    const dynEffPrice = calculateDynamicEffPrice(row, activePp);
+
+                    saatlerFD.push(`${d} H${h}`);
+                    kndFD.push(prod);
+                    ptfFD.push(parseFloat(row['PTF']) || 0);
+                    sfcFD.push(parseFloat(row['SFC_PRICE']) || 0);
+                    effFD.push(dynEffPrice);
+                });
+
+                let blockAgg = {};
+                rawData.forEach(row => {
+                    const d = row['Date'] || row['date'] || '';
+                    const b = row['Block'] || row['block'] || 'Belirsiz';
+                    const kombineBlok = `${d} B${b}`;
+                    const prod = getSantralProduction(row, activePp);
+                    const dynEffPrice = calculateDynamicEffPrice(row, activePp);
+
+                    if (!blockAgg[kombineBlok]) {
+                        blockAgg[kombineBlok] = { kndSum: 0, ptfSum: 0, sfcSum: 0, totalWeightedEffPrice: 0, totalActiveProd: 0, count: 0 };
+                    }
+                    blockAgg[kombineBlok].kndSum += prod;
+                    blockAgg[kombineBlok].ptfSum += parseFloat(row['PTF']) || 0;
+                    blockAgg[kombineBlok].sfcSum += parseFloat(row['SFC_PRICE']) || 0;
+                    blockAgg[kombineBlok].count++;
+
+                    if (prod > 0) {
+                        blockAgg[kombineBlok].totalWeightedEffPrice += (dynEffPrice * prod);
+                        blockAgg[kombineBlok].totalActiveProd += prod;
+                    }
+                });
+                let blockLabels = Object.keys(blockAgg);
+                let blockKnd = blockLabels.map(b => blockAgg[b].kndSum);
+                let blockPtf = blockLabels.map(b => blockAgg[b].ptfSum / blockAgg[b].count);
+                let blockSfc = blockLabels.map(b => blockAgg[b].sfcSum / blockAgg[b].count);
+                let blockEff = blockLabels.map(b => {
+                    return blockAgg[b].totalActiveProd > 0 ? (blockAgg[b].totalWeightedEffPrice / blockAgg[b].totalActiveProd) : 0;
+                });
+
+                let dailyAgg = {};
+                rawData.forEach(row => {
+                    const d = row['Date'] || row['date'] || 'Günlük';
+                    const prod = getSantralProduction(row, activePp);
+                    const dynEffPrice = calculateDynamicEffPrice(row, activePp);
+
+                    if (!dailyAgg[d]) {
+                        dailyAgg[d] = { kndSum: 0, ptfSum: 0, sfcSum: 0, totalWeightedEffPrice: 0, totalActiveProd: 0, count: 0 };
+                    }
+                    dailyAgg[d].kndSum += prod;
+                    dailyAgg[d].ptfSum += parseFloat(row['PTF']) || 0;
+                    dailyAgg[d].sfcSum += parseFloat(row['SFC_PRICE']) || 0;
+                    dailyAgg[d].count++;
+
+                    if (prod > 0) {
+                        dailyAgg[d].totalWeightedEffPrice += (dynEffPrice * prod);
+                        dailyAgg[d].totalActiveProd += prod;
+                    }
+                });
+                let dailyLabels = Object.keys(dailyAgg);
+                let dailyKnd = dailyLabels.map(d => dailyAgg[d].kndSum);
+                let dailyPtf = dailyLabels.map(d => dailyAgg[d].ptfSum / dailyAgg[d].count);
+                let dailySfc = dailyLabels.map(d => dailyAgg[d].sfcSum / dailyAgg[d].count);
+                let dailyEff = dailyLabels.map(d => {
+                    return dailyAgg[d].totalActiveProd > 0 ? (dailyAgg[d].totalWeightedEffPrice / dailyAgg[d].totalActiveProd) : 0;
+                });
+
+                chart1 = renderEngine(document.getElementById('kndChart').getContext('2d'), chart1, 'kndChartScrollbar', 'kndChartDayScrollbar', saatlerAll, kndAll, ptfAll, sfcAll, effAll, true);
+                chart1_FD = renderEngine(document.getElementById('firstDayChart').getContext('2d'), chart1_FD, 'firstDayChartScrollbar', 'firstDayChartDayScrollbar', saatlerFD, kndFD, ptfFD, sfcFD, effFD, true);
+                chart2 = renderEngine(document.getElementById('blockChart').getContext('2d'), chart2, 'blockChartScrollbar', 'blockChartDayScrollbar', blockLabels, blockKnd, blockPtf, blockSfc, blockEff, false);
+                chart3 = renderStandardEngine(document.getElementById('dailyChart').getContext('2d'), chart3, dailyLabels, dailyKnd, dailyPtf, dailySfc, dailyEff);
+                
+                chartResH = renderReservoirEngine(document.getElementById('resHourlyChart').getContext('2d'), chartResH, 'resHourlyChartScrollbar', 'resHourlyChartDayScrollbar', resHoursLabels, resHoursMeters, resHoursData, true);
+                chartResD = renderStandardReservoir(document.getElementById('resDailyChart').getContext('2d'), chartResD, resDailyLabels, resDailyMeters, resDailyData);
+
+                buildMatrixTables();
+                renderSelectedTable();
+                renderInputsTable();
+            } catch (err) {
+                console.error("Dashboard genel motor hatası:", err);
+            }
+        }
+
+        function renderInputsTable() {
+            try {
+                const head = document.getElementById('inputs-table-head');
+                const body = document.getElementById('inputs-table-body');
+                const summaryBox = document.getElementById('inputsSummaryBox');
+                head.innerHTML = ""; body.innerHTML = ""; summaryBox.innerHTML = "";
+
+                // Eğer bağımsız input dosyası yüklenmişse onu oku, yoksa results.csv havuzunu fallback kullan.
+                // Ham LBO/WHBO girdi dosyası (MEP, SFC, Feke, Goktas, "{PP} Inf.", "{PP} Level") ile
+                // Results.csv (PTF, SFC_PRICE, {PP}_MODE, {PP}_Level, {PP}_Spill) tamamen farklı kolon
+                // adlandırması kullanır — bu yüzden kaynağa göre ayrı okunmaları gerekir.
+                const isRawInput = inputFileData.length > 0;
+                let dataSource = isRawInput ? inputFileData : rawData;
+                if (dataSource.length === 0) return;
+
+                // Ham girdi dosyasında "Selected" ve "PP-9"/"Spillage Case" satır bazlı değil,
+                // tüm dosya için geçerli global bilgilerdir (saatlik değil).
+                let globalActiveRaw = false;
+                let globalSpillageRaw = false;
+                if (isRawInput) {
+                    dataSource.forEach(row => {
+                        const selVal = (row['Selected'] || '').toUpperCase().trim();
+                        if (selVal === activePp) globalActiveRaw = true;
+                        const pp9 = (row['PP-9'] || '').toUpperCase().trim();
+                        const spillCase = (row['Spillage Case'] || '').toUpperCase().trim();
+                        if (pp9 === activePp && spillCase === 'TRUE') globalSpillageRaw = true;
+                    });
+                }
+
+                // Feke/Goktas ve "{PP} Inf." kolonları LBO.py'de doğrudan hm³ bazlı su
+                // dengesine (Level, Rel) eklenir — üretim (MW) değil, deşarj/akış (hm³) değeridir.
+                let rows = dataSource.map(row => {
+                    const dateStr = getInputRowDateStr(row, isRawInput);
+                    if (!dateStr) return null;
+                    const hour = row['Hour'] || row['hour'] || '0';
+
+                    const ptf = isRawInput
+                        ? (parseFloat(row['MEP']) || 0)
+                        : (parseFloat(row['PTF']) || parseFloat(row['ptf']) || 0);
+                    const sfc = isRawInput
+                        ? (parseFloat(row['SFC']) || 0)
+                        : (parseFloat(row['SFC_PRICE']) || parseFloat(row['sfc_price']) || 0);
+                    const feke = isRawInput ? (parseFloat(row['Feke']) || 0) : 0;
+                    const goktas = isRawInput ? (parseFloat(row['Goktas']) || 0) : 0;
+                    const inflow = isRawInput ? (parseFloat(row[activePp + ' Inf.']) || 0) : 0;
+
+                    const rawLevel = isRawInput
+                        ? (parseFloat(row[activePp + ' Level']) || 0)
+                        : (parseFloat(row[activePp + '_Level']) || 0);
+                    const levelMeter = rawLevel > 0 ? convertToMeters(rawLevel, activePp) : null;
+
+                    let active = isRawInput ? globalActiveRaw : false;
+                    let spill = isRawInput ? globalSpillageRaw : false;
+                    if (!isRawInput) {
+                        const modeVal = (row[activePp + '_MODE'] || '').toUpperCase().trim();
+                        active = modeVal !== "OFF" && modeVal !== "";
+                        spill = (parseFloat(row[activePp + '_Spill']) || 0) > 0;
+                    }
+
+                    return { dateStr, hour, ts: getInputRowTimestamp(dateStr, hour), ptf, sfc, feke, goktas, inflow, levelMeter, active, spill };
+                }).filter(r => r !== null);
+
+                rows.sort((a, b) => a.ts - b.ts);
+                if (rows.length === 0) return;
+
+                // --- Üst özet kutusu: Start/End Date ve Start/End Level (tüm yüklü aralık) ---
+                const levelRows = rows.filter(r => r.levelMeter !== null);
+                const startLevel = levelRows.length > 0 ? levelRows[0].levelMeter.toFixed(2) + " m" : "-";
+                const endLevel = levelRows.length > 0 ? levelRows[levelRows.length - 1].levelMeter.toFixed(2) + " m" : "-";
+
+                summaryBox.innerHTML = `
+                    <div class="inputs-summary-tile">
+                        <div class="summary-label">Start Date</div>
+                        <div class="summary-value">${rows[0].dateStr}</div>
+                    </div>
+                    <div class="inputs-summary-tile">
+                        <div class="summary-label">End Date</div>
+                        <div class="summary-value">${rows[rows.length - 1].dateStr}</div>
+                    </div>
+                    <div class="inputs-summary-tile">
+                        <div class="summary-label">${activePp} Start Level</div>
+                        <div class="summary-value">${startLevel}</div>
+                    </div>
+                    <div class="inputs-summary-tile">
+                        <div class="summary-label">${activePp} End Level</div>
+                        <div class="summary-value">${endLevel}</div>
+                    </div>`;
+
+                if (inputsGranularity === 'hourly') {
+                    head.innerHTML = `
+                        <tr>
+                            <th>Tarih / Saat</th>
+                            <th>Feke Outflow (hm³)</th>
+                            <th>Göktaş Outflow (hm³)</th>
+                            <th>Inflow (hm³)</th>
+                            <th>PTF (TL)</th>
+                            <th>SFK (TL)</th>
+                            <th>Santral Aktiflik Durumu</th>
+                            <th>Spillage Modu</th>
+                        </tr>`;
+
+                    let html = "";
+                    rows.forEach(r => {
+                        html += `
+                            <tr>
+                                <td><b>${r.dateStr} H${r.hour}</b></td>
+                                <td>${r.feke.toLocaleString('tr-TR')} hm³</td>
+                                <td>${r.goktas.toLocaleString('tr-TR')} hm³</td>
+                                <td>${r.inflow.toLocaleString('tr-TR')} hm³</td>
+                                <td>${r.ptf.toFixed(0)} TL</td>
+                                <td>${r.sfc.toFixed(0)} TL</td>
+                                <td style="font-weight:700; color: ${r.active ? '#10b981' : '#ef4444'}">${r.active ? 'Active' : 'Off'}</td>
+                                <td style="font-weight:700; color: ${r.spill ? '#f97316' : '#64748b'}">${r.spill ? 'Spillage' : 'No'}</td>
+                            </tr>`;
+                    });
+                    body.innerHTML = html;
+                } else {
+                    let dailyData = {};
+                    rows.forEach(r => {
+                        if (!dailyData[r.dateStr]) {
+                            dailyData[r.dateStr] = { fekeSum: 0, goktasSum: 0, inflowSum: 0, ptfList: [], sfcList: [], active: false, spill: false };
+                        }
+                        const dd = dailyData[r.dateStr];
+                        dd.fekeSum += r.feke;
+                        dd.goktasSum += r.goktas;
+                        dd.inflowSum += r.inflow;
+                        dd.ptfList.push(r.ptf);
+                        dd.sfcList.push(r.sfc);
+                        if (r.active) dd.active = true;
+                        if (r.spill) dd.spill = true;
+                    });
+
+                    head.innerHTML = `
+                        <tr>
+                            <th>Tarih</th>
+                            <th>Feke Outflow (hm³)</th>
+                            <th>Göktaş Outflow (hm³)</th>
+                            <th>Daily Inflow (hm³)</th>
+                            <th>Ort. PTF (TL)</th>
+                            <th>Ort. SFK (TL)</th>
+                            <th>Santral Aktiflik Durumu</th>
+                            <th>Spillage Modu</th>
+                        </tr>`;
+
+                    let html = "";
+                    Object.keys(dailyData).sort((a, b) => parseFlexibleDate(a) - parseFlexibleDate(b)).forEach(d => {
+                        const info = dailyData[d];
+                        const avgPtf = (info.ptfList.reduce((a, b) => a + b, 0) / info.ptfList.length).toFixed(0);
+                        const avgSfk = (info.sfcList.reduce((a, b) => a + b, 0) / info.sfcList.length).toFixed(0);
+                        html += `
+                            <tr>
+                                <td><b>${d}</b></td>
+                                <td>${info.fekeSum.toLocaleString('tr-TR')} hm³</td>
+                                <td>${info.goktasSum.toLocaleString('tr-TR')} hm³</td>
+                                <td>${info.inflowSum.toLocaleString('tr-TR')} hm³</td>
+                                <td>${avgPtf} TL</td>
+                                <td>${avgSfk} TL</td>
+                                <td style="font-weight:700; color: ${info.active ? '#10b981' : '#ef4444'}">${info.active ? 'Active' : 'Off'}</td>
+                                <td style="font-weight:700; color: ${info.spill ? '#f97316' : '#64748b'}">${info.spill ? 'Spillage' : 'No'}</td>
+                            </tr>`;
+                    });
+                    body.innerHTML = html;
+                }
+            } catch (err) {
+                console.error("Inputs tablosu oluşturulurken hata:", err);
+            }
+        }
+
+        function buildMatrixTables() {
+            try {
+                let uniqueDates = [...new Set(rawData.map(r => r['Date'] || r['date'] || ''))];
+                let blocks = [...new Set(rawData.map(r => r['Block'] || r['block'] || '1'))].sort();
+
+                let caughtMap = {}, missedMap = {};
+                let caughtVals = [], missedVals = [];
+                let blockParams = {}; 
+
+                let dailyCaughtTotals = {};
+                let dailyMissedTotals = {};
+                let blockCaughtTotals = {};
+                let blockMissedTotals = {};
+
+                let grandCaughtTotal = { totalRevenue: 0, totalVolume: 0 };
+                let grandMissedTotal = { totalRevenue: 0, totalVolume: 0 };
+
+                uniqueDates.forEach(d => {
+                    dailyCaughtTotals[d] = { totalRevenue: 0, totalVolume: 0 };
+                    dailyMissedTotals[d] = { totalRevenue: 0, totalVolume: 0 };
+                });
+
+                blocks.forEach(b => {
+                    blockCaughtTotals[b] = { totalRevenue: 0, totalVolume: 0 };
+                    blockMissedTotals[b] = { totalRevenue: 0, totalVolume: 0 };
+
+                    caughtMap[b] = {};
+                    missedMap[b] = {};
+                    uniqueDates.forEach(d => {
+                        caughtMap[b][d] = { prices: [], modes: [], volumes: [] };
+                        missedMap[b][d] = { prices: [], modes: [], volumes: [] };
+                        
+                        const key = `${d}_B${b}`;
+                        blockParams[key] = { sfcQty: 0, sfcProd: 0, hasData: false };
+                    });
+                });
+
+                rawData.forEach(row => {
+                    const d = row['Date'] || row['date'] || '';
+                    const b = row['Block'] || row['block'] || '1';
+                    const key = `${d}_B${b}`;
+
+                    const sfcQtyVal = parseFloat(row[activePp + '_SFC']) || 0;
+                    const sfcProdVal = parseFloat(row[activePp + '_BASE']) || 0;
+
+                    if (blockParams[key] && sfcQtyVal > 0 && sfcProdVal > 0 && !blockParams[key].hasData) {
+                        blockParams[key].sfcQty = sfcQtyVal;
+                        blockParams[key].sfcProd = sfcProdVal;
+                        blockParams[key].hasData = true; 
+                    }
+                });
+
+                rawData.forEach(row => {
+                    const d = row['Date'] || row['date'] || '';
+                    const b = row['Block'] || row['block'] || '1';
+                    const key = `${d}_B${b}`;
+
+                    const knd = getSantralProduction(row, activePp);
+                    const ptf = parseFloat(row['PTF']) || parseFloat(row['ptf']) || 0;
+                    const sfcPrice = parseFloat(row['SFC_PRICE']) || parseFloat(row['sfc_price']) || 0;
+                    
+                    const modeKey = activePp + '_MODE';
+                    const modeVal = (row[modeKey] || row['Mode'] || row['mode'] || '').toUpperCase().trim();
+
+                    const dynCalculatedEffPrice = calculateDynamicEffPrice(row, activePp); 
+
+                    let displayMode = "Off";
+                    if (modeVal.includes("BASE")) {
+                        displayMode = "Base";
+                    } else if (modeVal.includes("SFC") || modeVal.includes("SFK")) {
+                        displayMode = "Sfc";
+                    } else if (modeVal !== "OFF" && modeVal !== "") {
+                        displayMode = modeVal;
+                    }
+
+                    if (knd > 0) {
+                        if (caughtMap[b] && caughtMap[b][d]) {
+                            caughtMap[b][d].prices.push(dynCalculatedEffPrice);
+                            caughtMap[b][d].modes.push(displayMode);
+                            caughtMap[b][d].volumes.push(knd); 
+                            caughtVals.push(dynCalculatedEffPrice);
+
+                            if (dailyCaughtTotals[d]) {
+                                dailyCaughtTotals[d].totalRevenue += (dynCalculatedEffPrice * knd);
+                                dailyCaughtTotals[d].totalVolume += knd;
+                            }
+                            if (blockCaughtTotals[b]) {
+                                blockCaughtTotals[b].totalRevenue += (dynCalculatedEffPrice * knd);
+                                blockCaughtTotals[b].totalVolume += knd;
+                            }
+                            grandCaughtTotal.totalRevenue += (dynCalculatedEffPrice * knd);
+                            grandCaughtTotal.totalVolume += knd;
+                        }
+                    }
+                    
+                    if (modeVal === "OFF") {
+                        let missedEffPrice = 0;
+                        let virtualVolume = 0; 
+
+                        if (blockParams[key] && blockParams[key].hasData) {
+                            missedEffPrice = ptf + (sfcPrice * (blockParams[key].sfcQty / blockParams[key].sfcProd));
+                            virtualVolume = blockParams[key].sfcProd; 
+                        } else {
+                            const ratio = embeddedRatios[activePp] || 0;
+                            missedEffPrice = ptf + (sfcPrice * ratio);
+                            virtualVolume = plantCapacities[activePp] || 100; 
+                        }
+                        if (missedMap[b] && missedMap[b][d]) {
+                            missedMap[b][d].prices.push(missedEffPrice);
+                            missedMap[b][d].modes.push("Off"); 
+                            missedMap[b][d].volumes.push(virtualVolume);
+                            missedVals.push(missedEffPrice);
+
+                            if (dailyMissedTotals[d]) {
+                                dailyMissedTotals[d].totalRevenue += (missedEffPrice * virtualVolume);
+                                dailyMissedTotals[d].totalVolume += virtualVolume;
+                            }
+                            if (blockMissedTotals[b]) {
+                                blockMissedTotals[b].totalRevenue += (missedEffPrice * virtualVolume);
+                                blockMissedTotals[b].totalVolume += virtualVolume;
+                            }
+                            grandMissedTotal.totalRevenue += (missedEffPrice * virtualVolume);
+                            grandMissedTotal.totalVolume += virtualVolume;
+                        }
+                    }
+                });
+
+                let minCaught = caughtVals.length > 0 ? Math.min(...caughtVals) : 0;
+                let maxCaught = caughtVals.length > 0 ? Math.max(...caughtVals) : 1;
+                let minMissed = missedVals.length > 0 ? Math.min(...missedVals) : 0;
+                let maxMissed = missedVals.length > 0 ? Math.max(...missedVals) : 1;
+
+                function get3ColorGradientStyle(val, minVal, maxVal) {
+                    if (val <= 0 || minVal === maxVal) return "";
+                    
+                    let pct = (val - minVal) / (maxVal - minVal);
+                    if (pct < 0) pct = 0;
+                    if (pct > 1) pct = 1;
+
+                    let r, g, bColor;
+                    if (pct < 0.5) {
+                        let ratio = pct * 2; 
+                        r = Math.round(34 + (234 - 34) * ratio);
+                        g = Math.round(197 + (179 - 197) * ratio);
+                        bColor = Math.round(94 + (8 - 94) * ratio);
+                    } else {
+                        let ratio = (pct - 0.5) * 2;
+                        r = Math.round(234 + (239 - 234) * ratio);
+                        g = Math.round(179 + (68 - 179) * ratio);
+                        bColor = Math.round(8 + (68 - 8) * ratio);
+                    }
+                    return `style='background-color: rgba(${r}, ${g}, ${bColor}, 0.45); color: #000;'`;
+                }
+
+                function generateTableHTML(mapData, minVal, maxVal, dailyTotalsHavuzu, blockTotalsHavuzu, grandTotalObjesi) {
+                    let blockAvgVals = [];
+                    blocks.forEach(b => {
+                        const bPool = blockTotalsHavuzu[b];
+                        if (bPool && bPool.totalVolume > 0) blockAvgVals.push(bPool.totalRevenue / bPool.totalVolume);
+                    });
+                    let minBlockAvg = blockAvgVals.length > 0 ? Math.min(...blockAvgVals) : minVal;
+                    let maxBlockAvg = blockAvgVals.length > 0 ? Math.max(...blockAvgVals) : maxVal;
+
+                    let dailyAvgVals = [];
+                    uniqueDates.forEach(d => {
+                        if (!d) return;
+                        const pool = dailyTotalsHavuzu[d];
+                        if (pool && pool.totalVolume > 0) dailyAvgVals.push(pool.totalRevenue / pool.totalVolume);
+                    });
+                    let minDailyAvg = dailyAvgVals.length > 0 ? Math.min(...dailyAvgVals) : minVal;
+                    let maxDailyAvg = dailyAvgVals.length > 0 ? Math.max(...dailyAvgVals) : maxVal;
+
+                    let html = "<thead><tr><th class='hour-header'>Block / Date</th>";
+                    uniqueDates.forEach(d => { 
+                        if (d) html += `<th>${d}</th>`; 
+                    });
+                    html += "<th class='block-avg-header'>Block Avg</th></tr></thead><tbody>";
+
+                    blocks.forEach(b => {
+                        html += `<tr><td class='hour-header'><b>B${b}</b></td>`;
+                        uniqueDates.forEach(d => {
+                            if (!d) return;
+                            const cellData = (mapData[b] && mapData[b][d]) ? mapData[b][d] : { prices: [], modes: [], volumes: [] };
+                            let avgPrice = 0;
+                            let dominantMode = "-";
+
+                            if(cellData.prices && cellData.prices.length > 0) {
+                                avgPrice = cellData.prices.reduce((acc, curr) => acc + curr, 0) / cellData.prices.length;
+                                
+                                const modeCounts = {};
+                                if (cellData.modes && cellData.modes.length > 0) {
+                                    cellData.modes.forEach(m => {
+                                        if (m) modeCounts[m] = (modeCounts[m] || 0) + 1;
+                                    });
+                                }
+                                
+                                if (modeCounts["Base"]) {
+                                    dominantMode = "Base";
+                                } else {
+                                    const keys = Object.keys(modeCounts);
+                                    dominantMode = keys.length > 0 ? keys.reduce((a, b) => modeCounts[a] > modeCounts[b] ? a : b) : "-";
+                                }
+                            }
+                            
+                            let cellStyle = avgPrice > 0 ? get3ColorGradientStyle(avgPrice, minVal, maxVal) : "";
+
+                            html += `<td ${cellStyle}>`;
+                            if (avgPrice > 0) {
+                                html += `<span>${avgPrice.toFixed(0)}</span>`;
+                                html += `<span class='mode-lbl'>(${dominantMode})</span>`;
+                            } else {
+                                html += `0`;
+                            }
+                            html += `</td>`;
+                        });
+
+                        const bPool = blockTotalsHavuzu[b];
+                        let blockWAvgPrice = 0;
+                        if (bPool && bPool.totalVolume > 0) {
+                            blockWAvgPrice = bPool.totalRevenue / bPool.totalVolume;
+                        }
+                        
+                        let blockAvgStyle = blockWAvgPrice > 0 ? get3ColorGradientStyle(blockWAvgPrice, minBlockAvg, maxBlockAvg) : "";
+                        
+                        html += `<td class='block-avg-cell' ${blockAvgStyle}>`;
+                        if (blockWAvgPrice > 0) {
+                            html += `<span>${blockWAvgPrice.toFixed(0)}</span>`;
+                            html += `<span class='mode-lbl' style='color: #475569;'>(W.Avg)</span>`;
+                        } else {
+                            html += `0`;
+                        }
+                        html += `</td></tr>`;
+                    });
+
+                    html += `<tr class='daily-avg-row'><td class='daily-avg-header'><b>Daily Avg</b></td>`;
+                    uniqueDates.forEach(d => {
+                        if (!d) return;
+                        const pool = dailyTotalsHavuzu[d];
+                        let dailyWAvgPrice = 0;
+                        if (pool && pool.totalVolume > 0) {
+                            dailyWAvgPrice = pool.totalRevenue / pool.totalVolume;
+                        }
+
+                        let dailyAvgStyle = dailyWAvgPrice > 0 ? get3ColorGradientStyle(dailyWAvgPrice, minDailyAvg, maxDailyAvg) : "";
+
+                        html += `<td ${dailyAvgStyle}>`;
+                        if (dailyWAvgPrice > 0) {
+                            html += `<span>${dailyWAvgPrice.toFixed(0)}</span>`;
+                            html += `<span class='mode-lbl' style='color: #475569;'>(W.Avg)</span>`;
+                        } else {
+                            html += `0`;
+                        }
+                        html += `</td>`;
+                    });
+
+                    let grandWAvgPrice = 0;
+                    if (grandTotalObjesi && grandTotalObjesi.totalVolume > 0) {
+                        grandWAvgPrice = grandTotalObjesi.totalRevenue / grandTotalObjesi.totalVolume;
+                    }
+                    html += `<td class='grand-total-cell'>`;
+                    if (grandWAvgPrice > 0) {
+                        html += `<span>${grandWAvgPrice.toFixed(0)}</span>`;
+                        html += `<span class='mode-lbl' style='color: #0f172a; font-weight:800;'>TOTAL</span>`;
+                    } else {
+                        html += `0`;
+                    }
+                    html += `</td></tr>`;
+
+                    html += "</tbody>";
+                    return html;
+                }
+
+                document.getElementById('caughtMatrixTable').innerHTML = generateTableHTML(caughtMap, minCaught, maxCaught, dailyCaughtTotals, blockCaughtTotals, grandCaughtTotal);
+                document.getElementById('missedMatrixTable').innerHTML = generateTableHTML(missedMap, minMissed, maxMissed, dailyMissedTotals, blockMissedTotals, grandMissedTotal);
+            } catch (matrixErr) {
+                console.error("Matris tablosu motor hatası:", matrixErr);
+            }
+        }
+
+        function renderSelectedTable() {
+            try {
+                const head = document.getElementById('table-head');
+                const body = document.getElementById('table-body');
+                head.innerHTML = ""; body.innerHTML = "";
+
+                if(activeTableTab === 'hourly') {
+                    head.innerHTML = `<tr><th>Tarih / Saat</th><th>Blok</th><th>Üretim (Generation)</th><th>PTF (TL/MWh)</th><th>SFC Fiyatı (TL/MWh)</th><th>Efektif Fiyat (TL/MWh)</th></tr>`;
+                    let html = "";
+                    firstDayData.forEach(row => {
+                        const d = row['Date'] || row['date'] || ''; const h = row['Hour'] || row['hour'] || '0';
+                        const knd = getSantralProduction(row, activePp); const ptf = parseFloat(row['PTF']) || 0;
+                        const sfc = parseFloat(row['SFC_PRICE']) || 0; const eff = calculateDynamicEffPrice(row, activePp);
+                        html += `<tr><td><b>${d} H${h}</b></td><td>${row['Block']||'-'}</td><td>${knd.toLocaleString('tr-TR')} MW</td><td>${ptf.toFixed(2)} TL/MWh</td><td>${sfc.toFixed(2)} TL/MWh</td><td style='color:#1b75bc; font-weight:700;'>${eff.toFixed(2)} TL/MWh</td></tr>`;
+                    });
+                    body.innerHTML = html;
+                } else if(activeTableTab === 'block') {
+                    head.innerHTML = `<tr><th>Blok Bilgisi</th><th>Toplam Üretim</th><th>Ortalama PTF (TL/MWh)</th><th>Ortalama SFC Fiyatı (TL/MWh)</th><th>Ağırlıklı Efektif Fiyat (TL/MWh)</th></tr>`;
+                    let blockAgg = {};
+                    rawData.forEach(row => {
+                        const d = row['Date'] || row['date'] || ''; const b = row['Block'] || row['block'] || 'Belirsiz'; const k = `${d} B${b}`;
+                        const prod = getSantralProduction(row, activePp);
+                        const effPrice = calculateDynamicEffPrice(row, activePp);
+
+                        if (!blockAgg[k]) blockAgg[k] = { kndSum: 0, ptfSum: 0, sfcSum: 0, totalWeightedEffPrice: 0, totalActiveProd: 0, count: 0 };
+                        blockAgg[k].kndSum += prod;
+                        blockAgg[k].ptfSum += parseFloat(row['PTF']) || 0;
+                        blockAgg[k].sfcSum += parseFloat(row['SFC_PRICE']) || 0;
+                        blockAgg[k].count++;
+
+                        if (prod > 0) {
+                            blockAgg[k].totalWeightedEffPrice += (effPrice * prod);
+                            blockAgg[k].totalActiveProd += prod;
+                        }
+                    });
+                    let html = "";
+                    Object.keys(blockAgg).forEach(b => {
+                        const wEffPrice = blockAgg[b].totalActiveProd > 0 ? (blockAgg[b].totalWeightedEffPrice / blockAgg[b].totalActiveProd) : 0;
+                        html += `<tr><td><b>${b}</b></td><td>${blockAgg[b].kndSum.toLocaleString('tr-TR')} MW</td><td>${(blockAgg[b].ptfSum / blockAgg[b].count).toFixed(2)} TL/MWh</td><td>${(blockAgg[b].sfcSum / blockAgg[b].count).toFixed(2)} TL/MWh</td><td style='color:#1b75bc; font-weight:700;'>${wEffPrice.toFixed(2)} TL/MWh</td></tr>`;
+                    });
+                    body.innerHTML = html;
+                } else if(activeTableTab === 'daily') {
+                    head.innerHTML = `<tr><th>Tarih</th><th>Toplam Üretim</th><th>Ortalama PTF (TL/MWh)</th><th>Ortalama SFC Fiyatı (TL/MWh)</th><th>Ağırlıklı Efektif Fiyat (TL/MWh)</th></tr>`;
+                    let dailyAgg = {};
+                    rawData.forEach(row => {
+                        const d = row['Date'] || row['date'] || 'Günlük';
+                        const prod = getSantralProduction(row, activePp);
+                        const effPrice = calculateDynamicEffPrice(row, activePp);
+
+                        if (!dailyAgg[d]) {
+                            dailyAgg[d] = { kndSum: 0, ptfSum: 0, sfcSum: 0, totalWeightedEffPrice: 0, totalActiveProd: 0, count: 0 };
+                        }
+                        dailyAgg[d].kndSum += prod;
+                        dailyAgg[d].ptfSum += parseFloat(row['PTF']) || 0;
+                        dailyAgg[d].sfcSum += parseFloat(row['SFC_PRICE']) || 0;
+                        dailyAgg[d].count++;
+
+                        if (prod > 0) {
+                            dailyAgg[d].totalWeightedEffPrice += (effPrice * prod);
+                            dailyAgg[d].totalActiveProd += prod;
+                        }
+                    });
+                    let html = "";
+                    Object.keys(dailyAgg).forEach(d => {
+                        const wEffPrice = dailyAgg[d].totalActiveProd > 0 ? (dailyAgg[d].totalWeightedEffPrice / dailyAgg[d].totalActiveProd) : 0;
+                        html += `<tr><td><b>${d}</b></td><td>${dailyAgg[d].kndSum.toLocaleString('tr-TR')} MW</td><td>${(dailyAgg[d].ptfSum / dailyAgg[d].count).toFixed(2)} TL/MWh</td><td>${(dailyAgg[d].sfcSum / dailyAgg[d].count).toFixed(2)} TL/MWh</td><td style='color:#1b75bc; font-weight:700;'>${wEffPrice.toFixed(2)} TL/MWh</td></tr>`;
+                    });
+                    body.innerHTML = html;
+                }
+            } catch (tblErr) {
+                console.error("Alt detay tablosu yüklenirken hata oluştu:", tblErr);
+            }
+        }
+
+        function renderEngine(ctx, chartInstance, scrollbarId, dayScrollbarId, labels, kndData, ptfData, sfcData, effPriceData, isHourly) {
+            if (chartInstance) { chartInstance.destroy(); }
+            
+            const maxProduction = Math.max(...kndData, 10) * 1.4;
+            const maxPrice = Math.max(...ptfData, ...sfcData, 100) * 1.15;
+            const visibleCount = 30;
+
+            const datasets = [
+                {
+                    type: 'bar', label: `${activePp} Üretim (MW)`, data: kndData, backgroundColor: '#0c4a6e', yAxisID: 'y', order: 3,
+                    datalabels: {
+                        display: function(context) {
+                            const v = context.dataset.data[context.dataIndex];
+                            return v !== null && v !== undefined && v !== 0;
+                        },
+                        align: 'top', anchor: 'end', color: '#000000', rotation: -90, offset: 20, 
+                        font: { size: 12, weight: '700' }, 
+                        formatter: function(value, context) {
+                            const effPrice = effPriceData ? effPriceData[context.dataIndex] : 0;
+                            return effPrice > 0 ? effPrice.toFixed(0) + " TL" : "";
+                        }
+                    }
+                },
+                { type: 'line', label: 'PTF', data: ptfData, borderColor: '#f97316', borderWidth: 2.5, pointRadius: isHourly ? 3 : 5, backgroundColor: 'transparent', yAxisID: 'y1', tension: 0.1, order: 1, datalabels: { display: false } },
+                { type: 'line', label: 'SFK', data: sfcData, borderColor: '#10b981', borderWidth: 2, pointRadius: isHourly ? 2 : 4, borderDash: [4, 4], backgroundColor: 'transparent', yAxisID: 'y1', tension: 0.1, order: 2, datalabels: { display: false } }
+            ];
+
+            const chart = new Chart(ctx, {
+                data: { labels: labels, datasets: datasets },
+                options: {
+                    responsive: true, maintainAspectRatio: false,
+                    layout: { padding: { top: 110, bottom: 5, left: 15, right: 15 } },
+                    plugins: {
+                        legend: { display: true, position: 'bottom', labels: { boxWidth: 15, font: { size: 14, weight: '700' }, color: '#0f172a' } },
+                        datalabels: { clip: false },
+                        zoom: {
+                            pan: { enabled: true, mode: 'x', threshold: 10 },
+                            zoom: { wheel: { enabled: false }, pinch: { enabled: false }, mode: 'x' }
+                        }
+                    },
+                    scales: {
+                        x: { 
+                            grid: { display: false }, 
+                            ticks: { maxRotation: 90, minRotation: 90, font: { size: 12, weight: '700' }, color: '#0f172a' },
+                            min: 0, max: Math.min(labels.length - 1, visibleCount - 1) 
+                        }, 
+                        y: { 
+                            type: 'linear', position: 'left', min: 0, max: maxProduction,
+                            title: { display: true, text: 'Üretim Hacmi (MW)', font: { size: 13, weight: '700' } }, 
+                            ticks: { font: { size: 12, weight: '700' } }, grid: { color: '#e2e8f0' }
+                        },
+                        y1: { 
+                            type: 'linear', position: 'right', min: 0, max: maxPrice,
+                            title: { display: true, text: 'Fiyat (TL/MWh)', font: { size: 13, weight: '700' } }, 
+                            ticks: { font: { size: 12, weight: '700' } }, grid: { drawOnChartArea: false } 
+                        }
+                    }
+                }
+            });
+
+            const scrollbar = document.getElementById(scrollbarId);
+            const dayScrollbar = document.getElementById(dayScrollbarId);
+
+            function updateScrollbars(minVal) {
+                if (scrollbar) scrollbar.value = minVal;
+                if (dayScrollbar) dayScrollbar.value = Math.floor(minVal / 24);
+            }
+
+            if (scrollbar) {
+                scrollbar.max = Math.max(0, labels.length - visibleCount);
+                scrollbar.value = 0;
+                scrollbar.oninput = function() {
+                    const min = parseInt(this.value, 10);
+                    chart.options.scales.x.min = min;
+                    chart.options.scales.x.max = min + (visibleCount - 1);
+                    chart.update('none');
+                    updateScrollbars(min);
+                };
+            }
+
+            if (dayScrollbar) {
+                const totalDays = Math.max(0, Math.floor((labels.length - visibleCount) / 24));
+                dayScrollbar.max = totalDays;
+                dayScrollbar.value = 0;
+                dayScrollbar.oninput = function() {
+                    const dayIndex = parseInt(this.value, 10);
+                    const min = dayIndex * 24;
+                    chart.options.scales.x.min = min;
+                    chart.options.scales.x.max = Math.min(labels.length - 1, min + (visibleCount - 1));
+                    chart.update('none');
+                    if (scrollbar) scrollbar.value = min;
+                };
+            }
+
+            chart.options.plugins.zoom.pan.onPan = function() {
+                updateScrollbars(Math.round(chart.scales.x.min));
+            };
+
+            return chart;
+        }
+
+        function renderReservoirEngine(ctx, chartInstance, scrollbarId, dayScrollbarId, labels, meterData, levelData, isHourly) {
+            if (chartInstance) { chartInstance.destroy(); }
+            
+            const p = activePp;
+            const activeMin = limits[p] ? limits[p].min : 100;
+            const activeMax = limits[p] ? limits[p].max : 200;
+            const yMin = activeMin - ((activeMax - activeMin) * 0.15 + 2);
+            const yMax = activeMax + ((activeMax - activeMin) * 0.35 + 3);
+            const visibleCount = 24;
+
+            let maxLineData = Array(labels.length).fill(activeMax);
+            let minLineData = Array(labels.length).fill(activeMin);
+
+            const datasets = [
+                {
+                    type: 'line', label: isHourly ? `${activePp} Kot Seviyesi` : `${activePp} H23 Sonu Kot Seviyesi`, data: meterData,
+                    borderColor: '#1b75bc', borderWidth: 3, pointRadius: isHourly ? 2 : 5, backgroundColor: 'rgba(27, 117, 188, 0.05)', fill: true, order: 1,
+                    datalabels: {
+                        display: function(context) { return levelData[context.dataIndex] !== 0; },
+                        align: 'top', anchor: 'end', color: '#000000', rotation: -90, offset: 20, font: { size: 12, weight: '700' }, 
+                        formatter: (v, context) => levelData[context.dataIndex].toFixed(1) + " hm³"
+                    }
+                },
+                { type: 'line', label: 'Maksimum Seviye', data: maxLineData, borderColor: '#0f172a', borderWidth: 2, borderDash: [6, 6], pointRadius: 0, fill: false, order: 2, datalabels: { display: false } },
+                { type: 'line', label: 'Minimum Seviye', data: minLineData, borderColor: '#7f1d1d', borderWidth: 2, borderDash: [6, 6], pointRadius: 0, fill: false, order: 3, datalabels: { display: false } }
+            ];
+
+            const chart = new Chart(ctx, {
+                type: 'line', data: { labels: labels, datasets: datasets },
+                options: {
+                    responsive: true, maintainAspectRatio: false,
+                    layout: { padding: { top: 110, bottom: 5, left: 15, right: 15 } },
+                    plugins: {
+                        legend: { display: true, position: 'bottom', labels: { font: { size: 14, weight: '700' }, color: '#0f172a' } }, 
+                        datalabels: { clip: false },
+                        zoom: {
+                            pan: { enabled: true, mode: 'x', threshold: 10 },
+                            zoom: { wheel: { enabled: false }, pinch: { enabled: false }, mode: 'x' }
+                        }
+                    },
+                    scales: {
+                        x: { grid: { color: '#e2e8f0' }, ticks: { maxRotation: 90, minRotation: 90, font: { size: 12, weight: '700' }, color: '#0f172a' }, min: 0, max: Math.min(labels.length - 1, visibleCount - 1) }, 
+                        y: { type: 'linear', position: 'left', min: yMin, max: yMax, title: { display: true, text: 'Rezervuar Kotu (Metre)', font: { size: 13, weight: '700' } }, ticks: { font: { size: 12, weight: '700' } } }
+                    }
+                }
+            });
+
+            const scrollbar = document.getElementById(scrollbarId);
+            const dayScrollbar = document.getElementById(dayScrollbarId);
+
+            function updateScrollbarsRes(minVal) {
+                if (scrollbar) scrollbar.value = minVal;
+                if (dayScrollbar) dayScrollbar.value = Math.floor(minVal / 24);
+            }
+
+            if (scrollbar) {
+                scrollbar.max = Math.max(0, labels.length - visibleCount);
+                scrollbar.value = 0;
+                scrollbar.oninput = function() {
+                    const min = parseInt(this.value, 10);
+                    chart.options.scales.x.min = min;
+                    chart.options.scales.x.max = min + (visibleCount - 1);
+                    chart.update('none');
+                    updateScrollbarsRes(min);
+                };
+            }
+
+            if (dayScrollbar) {
+                const totalDays = Math.max(0, Math.floor((labels.length - visibleCount) / 24));
+                dayScrollbar.max = totalDays;
+                dayScrollbar.value = 0;
+                dayScrollbar.oninput = function() {
+                    const dayIndex = parseInt(this.value, 10);
+                    const min = dayIndex * 24;
+                    chart.options.scales.x.min = min;
+                    chart.options.scales.x.max = Math.min(labels.length - 1, min + (visibleCount - 1));
+                    chart.update('none');
+                    if (scrollbar) scrollbar.value = min;
+                };
+            }
+
+            chart.options.plugins.zoom.pan.onPan = function() {
+                updateScrollbarsRes(Math.round(chart.scales.x.min));
+            };
+
+            return chart;
+        }
+
+        // --- DÜZELTİLMİŞ STANDART GÜNLÜK GRAFİK MOTORU ---
+        function renderStandardEngine(ctx, chartInstance, labels, kndData, ptfData, sfcData, effPriceData) {
+            if (chartInstance) chartInstance.destroy();
+            return new Chart(ctx, {
+                data: {
+                    labels: labels,
+                    datasets: [
+                        {
+                            type: 'bar', label: `${activePp} Üretim (MW)`, data: kndData, backgroundColor: '#0c4a6e', yAxisID: 'y', order: 3,
+                            datalabels: {
+                                display: true, align: 'top', anchor: 'end', color: '#000000', rotation: -90, offset: 20, 
+                                font: { size: 12, weight: '700' }, 
+                                formatter: (v, context) => {
+                                    const val = effPriceData ? effPriceData[context.dataIndex] : 0;
+                                    return val > 0 ? val.toFixed(0) + " TL" : "";
+                                }
+                            }
+                        },
+                        { type: 'line', label: 'PTF', data: ptfData, borderColor: '#f97316', borderWidth: 2.5, pointRadius: 5, backgroundColor: 'transparent', yAxisID: 'y1', tension: 0.1, order: 1, datalabels: { display: false } },
+                        { type: 'line', label: 'SFK', data: sfcData, borderColor: '#10b981', borderWidth: 2, pointRadius: 4, borderDash: [4, 4], backgroundColor: 'transparent', yAxisID: 'y1', tension: 0.1, order: 2, datalabels: { display: false } }
+                    ]
+                },
+                options: {
+                    responsive: true, maintainAspectRatio: false,
+                    layout: { padding: { top: 110, bottom: 5, left: 15, right: 15 } },
+                    plugins: {
+                        legend: { position: 'bottom', labels: { boxWidth: 15, font: { size: 14, weight: '700' } } },
+                        datalabels: { clip: false }
+                    },
+                    scales: {
+                        x: { ticks: { font: { size: 12, weight: '700' } } },
+                        y: { type: 'linear', position: 'left', title: { display: true, text: 'Üretim Hacmi (MW)' } },
+                        y1: { type: 'linear', position: 'right', title: { display: true, text: 'Fiyat (TL/MWh)' } }
+                    }
+                }
+            });
+        }
+
+        function renderStandardReservoir(ctx, chartInstance, labels, meterData, levelData) {
+            if (chartInstance) chartInstance.destroy();
+            const p = activePp;
+            const activeMin = limits[p] ? limits[p].min : 100;
+            const activeMax = limits[p] ? limits[p].max : 200;
+            const yMin = activeMin - ((activeMax - activeMin) * 0.15 + 2);
+            const yMax = activeMax + ((activeMax - activeMin) * 0.35 + 3);
+
+            return new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [
+                        {
+                            label: `${activePp} H23 Sonu Kot Seviyesi`, data: meterData, borderColor: '#1b75bc', borderWidth: 3, pointRadius: 5,
+                            backgroundColor: 'rgba(27, 117, 188, 0.05)', fill: true,
+                            datalabels: {
+                                display: true, align: 'top', anchor: 'end', color: '#000000', rotation: -90, offset: 20, 
+                                font: { size: 12, weight: '700' }, 
+                                formatter: (v, ctx) => levelData[ctx.dataIndex].toFixed(1) + " hm³"
+                            }
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true, maintainAspectRatio: false,
+                    layout: { padding: { top: 110, bottom: 5, left: 15, right: 15 } },
+                    plugins: {
+                        legend: { position: 'bottom', labels: { font: { size: 14, weight: '700' } } },
+                        datalabels: { clip: false }
+                    },
+                    scales: {
+                        x: { ticks: { font: { size: 12, weight: '700' } } },
+                        y: { type: 'linear', min: yMin, max: yMax, title: { display: true, text: 'Rezervuar Kotu (Metre)' } }
+                    }
+                }
+            });
+        }
+    </script>
+</body>
+</html>
