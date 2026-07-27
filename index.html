@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Performans Analiz ve Rezervuar Takip Paneli</title>
+    <title>DAM Short-Term Hydro Planning</title>
     <!-- Grafik, Etiket, Zoom ve Scroll Kütüphaneleri -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.0.0"></script>
@@ -509,6 +509,9 @@
             min-width: 0;
         }
         
+        .tab-btn[draggable="true"], .sub-btn[draggable="true"] { cursor: grab; }
+        .tab-btn.dragging, .sub-btn.dragging { opacity: 0.35; cursor: grabbing; }
+
         .tabs-container {
             display: flex;
             gap: 10px;
@@ -838,7 +841,7 @@
 <body>
 
     <div class="navbar">
-        <span>Santral Performans ve Rezervuar Takip Paneli</span>
+        <span>DAM Short-Term Hydro Planning</span>
         <div class="navbar-right">
             <span id="liveClock"></span>
             <div class="brand-logo">
@@ -847,32 +850,32 @@
                         <path d="M13 2 4 14h6l-1 8 9-12h-6l1-8Z" fill="white" fill-opacity="0.18"/>
                     </svg>
                 </span>
-                <span class="brand-wordmark">GÖP<span class="brand-accent">-Dispatch</span><small>Hidro Planlama</small></span>
+                <span class="brand-wordmark">GÖP<span class="brand-accent">-Dispatch</span><small>Hydro Planning</small></span>
             </div>
         </div>
     </div>
 
     <div class="container full-width">
         <div class="upload-section">
-            <div class="upload-section-label">Veri Kaynakları</div>
+            <div class="upload-section-label">Data Sources</div>
             <div class="upload-group">
-                <label for="csvFile" class="upload-btn">Results.csv Yükle</label>
+                <label for="csvFile" class="upload-btn">Upload Results.csv</label>
                 <input type="file" id="csvFile" accept=".csv" style="display:none;" onchange="handleFile(this)">
-                <span id="fileNameDisplay" class="upload-status upload-status--pending">Bekleniyor · Results.csv</span>
+                <span id="fileNameDisplay" class="upload-status upload-status--pending">Waiting · Results.csv</span>
             </div>
             
             <div class="upload-group">
-                <label for="inputFile" class="upload-btn input-btn">Input Dosyası Yükle (LBO/WHBO)</label>
+                <label for="inputFile" class="upload-btn input-btn">Upload Input File (LBO/WHBO)</label>
                 <input type="file" id="inputFile" accept=".csv" style="display:none;" onchange="handleInputFile(this)">
-                <span id="inputFileNameDisplay" class="upload-status upload-status--optional">Opsiyonel</span>
+                <span id="inputFileNameDisplay" class="upload-status upload-status--optional">Optional</span>
             </div>
 
             <div class="hydro-emojis">
-                <span class="static-emoji emoji-mountain" title="Rezervuar" onclick="triggerMountainFlow(this)">🏔️</span>
-                <span class="static-emoji emoji-drop" title="Su" onclick="triggerDropFall(this)">💧</span>
-                <span class="static-emoji emoji-wave" title="Akış" onclick="triggerFlood()">🌊</span>
-                <span class="static-emoji emoji-lightning" title="Üretim" onclick="triggerLightningFlash(this)">⚡</span>
-                <span class="rain-stage" id="rainStage" onclick="triggerRain()" title="Yağmur yağdır!">
+                <span class="static-emoji emoji-mountain" title="Reservoir" onclick="triggerMountainFlow(this)">🏔️</span>
+                <span class="static-emoji emoji-drop" title="Water" onclick="triggerDropFall(this)">💧</span>
+                <span class="static-emoji emoji-wave" title="Flow" onclick="triggerFlood()">🌊</span>
+                <span class="static-emoji emoji-lightning" title="Generation" onclick="triggerLightningFlash(this)">⚡</span>
+                <span class="rain-stage" id="rainStage" onclick="triggerRain()" title="Make it rain!">
                     <span class="rain-cloud">☁️</span>
                 </span>
             </div>
@@ -882,14 +885,14 @@
     <div id="dashboardLayout" class="container dashboard-layout">
         <!-- Sol Menü -->
         <div class="sidebar">
-            <h3>Santral Seçimi (PP)</h3>
+            <h3>Plant Selection (PP)</h3>
             <div id="filterGroup" class="filter-group"></div>
 
-            <h3 style="margin-top: 22px;">Zaman Aralığı</h3>
+            <h3 style="margin-top: 22px;">Time Range</h3>
             <div class="time-filter-modes">
-                <button type="button" id="btnRangeAll" class="range-btn active" onclick="setFilterMode('all')">Tümü</button>
-                <button type="button" id="btnRangeDay" class="range-btn" onclick="setFilterMode('day')">Günlük</button>
-                <button type="button" id="btnRangeWeek" class="range-btn" onclick="setFilterMode('week')">Haftalık</button>
+                <button type="button" id="btnRangeAll" class="range-btn active" onclick="setFilterMode('all')">All</button>
+                <button type="button" id="btnRangeDay" class="range-btn" onclick="setFilterMode('day')">Daily</button>
+                <button type="button" id="btnRangeWeek" class="range-btn" onclick="setFilterMode('week')">Weekly</button>
             </div>
             <select id="daySelect" class="range-select" style="display:none;" onchange="onDaySelectChange(this.value)"></select>
             <select id="weekSelect" class="range-select" style="display:none;" onchange="onWeekSelectChange(this.value)"></select>
@@ -900,15 +903,40 @@
             
             <!-- Ana Görünüm Sekmeleri -->
             <div class="tabs-container">
-                <button id="btnGraphView" class="tab-btn active" onclick="switchView('graph')">Grafik Görünümü</button>
-                <button id="btnReservoirView" class="tab-btn" onclick="switchView('reservoir')">Reservoir Level</button>
-                <button id="btnCaughtMissedView" class="tab-btn" onclick="switchView('caughtmissed')">Caught-Missed Eff. Prices</button>
-                <button id="btnMatrixView" class="tab-btn" onclick="switchView('matrix')">Veri Matrisi (Tablo)</button>
                 <button id="btnInputsView" class="tab-btn" onclick="switchView('inputs')">Inputs</button>
+                <button id="btnCaughtMissedView" class="tab-btn" onclick="switchView('caughtmissed')">Caught-Missed Eff. Prices</button>
+                <button id="btnHistogramView" class="tab-btn" onclick="switchView('histogram')">Price Histogram</button>
+                <button id="btnGraphView" class="tab-btn active" onclick="switchView('graph')">Chart View</button>
+                <button id="btnReservoirView" class="tab-btn" onclick="switchView('reservoir')">Reservoir Level</button>
+                <button id="btnMatrixView" class="tab-btn" onclick="switchView('matrix')">Data Matrix (Table)</button>
             </div>
 
             <!-- PANEL 1: GRAFİKLER -->
             <div id="panelGraphs" class="view-panel active">
+                <div class="card">
+                    <div class="card-title">Daily Distribution Profile (Generation-Weighted Effective Price)</div>
+                    <div class="standard-chart-wrapper">
+                        <canvas id="dailyChart"></canvas>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-title">Block-Based Distribution Profile (Generation-Weighted Effective Price)</div>
+                    <div class="chart-native-container">
+                        <canvas id="blockChart"></canvas>
+                    </div>
+                    <div class="chart-scrollbar-wrapper">
+                        <div class="chart-scrollbar-container">
+                            <span class="chart-scrollbar-label">Fine Flow</span>
+                            <input type="range" id="blockChartScrollbar" class="chart-scrollbar-input" min="0" value="0">
+                        </div>
+                        <div class="chart-scrollbar-container">
+                            <span class="chart-scrollbar-label">Block Jump</span>
+                            <input type="range" id="blockChartDayScrollbar" class="chart-scrollbar-input day-slider" min="0" value="0">
+                        </div>
+                    </div>
+                </div>
+
                 <div class="card">
                     <div id="graphTitle" class="card-title">-</div>
                     <div class="chart-native-container">
@@ -916,11 +944,11 @@
                     </div>
                     <div class="chart-scrollbar-wrapper">
                         <div class="chart-scrollbar-container">
-                            <span class="chart-scrollbar-label">Saatlik Akış</span>
+                            <span class="chart-scrollbar-label">Hourly Flow</span>
                             <input type="range" id="kndChartScrollbar" class="chart-scrollbar-input" min="0" value="0">
                         </div>
                         <div class="chart-scrollbar-container">
-                            <span class="chart-scrollbar-label">Günlük Atlama</span>
+                            <span class="chart-scrollbar-label">Daily Jump</span>
                             <input type="range" id="kndChartDayScrollbar" class="chart-scrollbar-input day-slider" min="0" value="0">
                         </div>
                     </div>
@@ -933,37 +961,13 @@
                     </div>
                     <div class="chart-scrollbar-wrapper">
                         <div class="chart-scrollbar-container">
-                            <span class="chart-scrollbar-label">Saatlik Akış</span>
+                            <span class="chart-scrollbar-label">Hourly Flow</span>
                             <input type="range" id="firstDayChartScrollbar" class="chart-scrollbar-input" min="0" value="0">
                         </div>
                         <div class="chart-scrollbar-container">
-                            <span class="chart-scrollbar-label">Günlük Atlama</span>
+                            <span class="chart-scrollbar-label">Daily Jump</span>
                             <input type="range" id="firstDayChartDayScrollbar" class="chart-scrollbar-input day-slider" min="0" value="0">
                         </div>
-                    </div>
-                </div>
-
-                <div class="card">
-                    <div class="card-title">Blok Bazlı Dağılım Profili (Üretim Hacim Ağırlıklı Efektif Fiyat)</div>
-                    <div class="chart-native-container">
-                        <canvas id="blockChart"></canvas>
-                    </div>
-                    <div class="chart-scrollbar-wrapper">
-                        <div class="chart-scrollbar-container">
-                            <span class="chart-scrollbar-label">Hassas Akış</span>
-                            <input type="range" id="blockChartScrollbar" class="chart-scrollbar-input" min="0" value="0">
-                        </div>
-                        <div class="chart-scrollbar-container">
-                            <span class="chart-scrollbar-label">Blok Atlama</span>
-                            <input type="range" id="blockChartDayScrollbar" class="chart-scrollbar-input day-slider" min="0" value="0">
-                        </div>
-                    </div>
-                </div>
-
-                <div class="card">
-                    <div class="card-title">Günlük Dağılım Profili (Üretim Hacim Ağırlıklı Efektif Fiyat)</div>
-                    <div class="standard-chart-wrapper">
-                        <canvas id="dailyChart"></canvas>
                     </div>
                 </div>
             </div>
@@ -977,11 +981,11 @@
                     </div>
                     <div class="chart-scrollbar-wrapper">
                         <div class="chart-scrollbar-container">
-                            <span class="chart-scrollbar-label">Saatlik Akış</span>
+                            <span class="chart-scrollbar-label">Hourly Flow</span>
                             <input type="range" id="resHourlyChartScrollbar" class="chart-scrollbar-input" min="0" value="0">
                         </div>
                         <div class="chart-scrollbar-container">
-                            <span class="chart-scrollbar-label">Günlük Atlama</span>
+                            <span class="chart-scrollbar-label">Daily Jump</span>
                             <input type="range" id="resHourlyChartDayScrollbar" class="chart-scrollbar-input day-slider" min="0" value="0">
                         </div>
                     </div>
@@ -998,14 +1002,14 @@
             <!-- PANEL 3: CAUGHT-MISSED MATRIS ALANI -->
             <div id="panelCaughtMissed" class="view-panel">
                 <div class="card checkpoint-card">
-                    <div class="card-title">Teyit Noktası (Min Caught / Max Missed)</div>
+                    <div class="card-title">Checkpoint (Min Caught / Max Missed)</div>
                     <div class="checkpoint-summary">
                         <div class="checkpoint-tile checkpoint-tile--caught">
-                            <span class="checkpoint-label">En Düşük Yakalanan Fiyat (Min Caught)</span>
+                            <span class="checkpoint-label">Lowest Caught Price (Min Caught)</span>
                             <span class="checkpoint-value" id="minCaughtValue">-</span>
                         </div>
                         <div class="checkpoint-tile checkpoint-tile--missed">
-                            <span class="checkpoint-label">En Yüksek Kaçırılan Fiyat (Max Missed)</span>
+                            <span class="checkpoint-label">Highest Missed Price (Max Missed)</span>
                             <span class="checkpoint-value" id="maxMissedValue">-</span>
                         </div>
                     </div>
@@ -1028,9 +1032,9 @@
             <div id="panelMatrix" class="view-panel">
                 <div class="card">
                     <div class="sub-tabs">
-                        <button id="btnSubHourly" class="sub-btn active" onclick="switchTableBreakdown('hourly')">Saatlik Görünüm (İlk Gün)</button>
-                        <button id="btnSubBlock" class="sub-btn" onclick="switchTableBreakdown('block')">Blok Bazlı Özet</button>
-                        <button id="btnSubDaily" class="sub-btn" onclick="switchTableBreakdown('daily')">Günlük Özet</button>
+                        <button id="btnSubHourly" class="sub-btn active" onclick="switchTableBreakdown('hourly')">Hourly View (First Day)</button>
+                        <button id="btnSubBlock" class="sub-btn" onclick="switchTableBreakdown('block')">Block Summary</button>
+                        <button id="btnSubDaily" class="sub-btn" onclick="switchTableBreakdown('daily')">Daily Summary</button>
                     </div>
                     <div id="matrixTitle" class="card-title">-</div>
                     <div style="overflow-x: auto;">
@@ -1046,13 +1050,13 @@
             <div id="panelInputs" class="view-panel">
                 <div class="card">
                     <div class="sub-tabs">
-                        <button id="btnInputLBO" class="sub-btn active" onclick="switchInputTab('LBO')">LBO Girdileri</button>
-                        <button id="btnInputWHBO" class="sub-btn" onclick="switchInputTab('WHBO')">WHBO Girdileri</button>
+                        <button id="btnInputLBO" class="sub-btn active" onclick="switchInputTab('LBO')">LBO Inputs</button>
+                        <button id="btnInputWHBO" class="sub-btn" onclick="switchInputTab('WHBO')">WHBO Inputs</button>
                         <span style="flex: 1 1 auto;"></span>
-                        <button id="btnGranDaily" class="sub-btn active" onclick="switchInputGranularity('daily')">Günlük</button>
-                        <button id="btnGranHourly" class="sub-btn" onclick="switchInputGranularity('hourly')">Saatlik</button>
+                        <button id="btnGranDaily" class="sub-btn active" onclick="switchInputGranularity('daily')">Daily</button>
+                        <button id="btnGranHourly" class="sub-btn" onclick="switchInputGranularity('hourly')">Hourly</button>
                     </div>
-                    <div class="card-title" id="inputsTitle">LBO Optimizasyon Girdileri</div>
+                    <div class="card-title" id="inputsTitle">LBO Optimization Inputs</div>
 
                     <div id="inputsSummaryBox" class="inputs-summary-box"></div>
 
@@ -1061,6 +1065,16 @@
                             <thead id="inputs-table-head"></thead>
                             <tbody id="inputs-table-body"></tbody>
                         </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- PANEL: PRICE HISTOGRAM -->
+            <div id="panelHistogram" class="view-panel">
+                <div class="card">
+                    <div class="card-title" id="histogramTitle">Caught Price Distribution (Generation-Weighted)</div>
+                    <div class="standard-chart-wrapper">
+                        <canvas id="histogramChart"></canvas>
                     </div>
                 </div>
             </div>
@@ -1099,7 +1113,7 @@
             "KND": 72 / 112, "SRG": 32 / 132, "MNG": 24 / 70, "KPR": 47 / 107, "KVB": 32 / 92, "ARK": 30 / 100
         };
 
-        let chart1 = null, chart1_FD = null, chart2 = null, chart3 = null;
+        let chart1 = null, chart1_FD = null, chart2 = null, chart3 = null, chartHistogram = null;
         let chartResH = null, chartResD = null;
         
         Chart.register(ChartDataLabels);
@@ -1609,14 +1623,14 @@
 
         function changePp(ppName) {
             activePp = ppName;
-            document.getElementById('graphTitle').innerText = `${activePp} Saatlik Performans Projeksiyonu`;
-            document.getElementById('graphTitleFirstDay').innerText = `${activePp} Saatlik Performans Projeksiyonu (İlk Gün)`;
-            document.getElementById('resTitleHourly').innerText = `${activePp} Rezervuar Seviye Takibi (Metre Ekseni)`;
-            document.getElementById('resTitleDaily').innerText = `${activePp} Günlük H23 Sonu Rezervuar Eğrisi`;
-            document.getElementById('matrixTitle').innerText = `${activePp} Detaylı Model Veri Matrisi`;
+            document.getElementById('graphTitle').innerText = `${activePp} Hourly Performance Projection`;
+            document.getElementById('graphTitleFirstDay').innerText = `${activePp} Hourly Performance Projection (First Day)`;
+            document.getElementById('resTitleHourly').innerText = `${activePp} Reservoir Level Tracking (Meter Axis)`;
+            document.getElementById('resTitleDaily').innerText = `${activePp} Daily End-of-H23 Reservoir Curve`;
+            document.getElementById('matrixTitle').innerText = `${activePp} Detailed Model Data Matrix`;
             
-            document.getElementById('matrix1-banner').innerText = `${activePp} Caught Effective Prices (Çalışılan Bloklar - TL/MWh)`;
-            document.getElementById('matrix2-banner').innerText = `${activePp} Missed Effective Prices (Çalışılmayan Bloklar - TL/MWh)`;
+            document.getElementById('matrix1-banner').innerText = `${activePp} Caught Effective Prices (Operated Blocks - TL/MWh)`;
+            document.getElementById('matrix2-banner').innerText = `${activePp} Missed Effective Prices (Non-Operated Blocks - TL/MWh)`;
             
             updateDashboard();
         }
@@ -1626,8 +1640,53 @@
             reservoir: { btn: 'btnReservoirView', panel: 'panelReservoir' },
             caughtmissed: { btn: 'btnCaughtMissedView', panel: 'panelCaughtMissed' },
             matrix: { btn: 'btnMatrixView', panel: 'panelMatrix' },
-            inputs: { btn: 'btnInputsView', panel: 'panelInputs' }
+            inputs: { btn: 'btnInputsView', panel: 'panelInputs' },
+            histogram: { btn: 'btnHistogramView', panel: 'panelHistogram' }
         };
+
+        // Sekmelerin (tab-btn / sub-btn) fare ile sürüklenerek yeniden sıralanabilmesini sağlar.
+        // Native HTML5 drag & drop kullanır - herhangi bir kütüphane gerektirmez.
+        function getDragAfterElement(container, x) {
+            const draggableEls = [...container.querySelectorAll('.tab-btn:not(.dragging), .sub-btn:not(.dragging)')];
+            return draggableEls.reduce((closest, child) => {
+                const box = child.getBoundingClientRect();
+                const offset = x - box.left - box.width / 2;
+                if (offset < 0 && offset > closest.offset) {
+                    return { offset: offset, element: child };
+                }
+                return closest;
+            }, { offset: Number.NEGATIVE_INFINITY }).element;
+        }
+
+        function enableTabDragReorder(containerSelector) {
+            document.querySelectorAll(containerSelector).forEach(container => {
+                let dragEl = null;
+                Array.from(container.children).forEach(child => {
+                    if (!child.classList || (!child.classList.contains('tab-btn') && !child.classList.contains('sub-btn'))) return;
+                    child.setAttribute('draggable', 'true');
+                    child.addEventListener('dragstart', () => {
+                        dragEl = child;
+                        setTimeout(() => child.classList.add('dragging'), 0);
+                    });
+                    child.addEventListener('dragend', () => {
+                        child.classList.remove('dragging');
+                        dragEl = null;
+                    });
+                });
+                container.addEventListener('dragover', (e) => {
+                    e.preventDefault();
+                    if (!dragEl) return;
+                    const after = getDragAfterElement(container, e.clientX);
+                    if (after == null) {
+                        container.appendChild(dragEl);
+                    } else {
+                        container.insertBefore(dragEl, after);
+                    }
+                });
+            });
+        }
+        enableTabDragReorder('.tabs-container');
+        enableTabDragReorder('.sub-tabs');
 
         function switchView(viewType) {
             Object.values(VIEW_ID_MAP).forEach(v => {
@@ -1653,10 +1712,10 @@
             document.getElementById('btnInputWHBO').classList.remove('active');
             if (mode === 'LBO') {
                 document.getElementById('btnInputLBO').classList.add('active');
-                document.getElementById('inputsTitle').innerText = "LBO Optimizasyon Girdileri";
+                document.getElementById('inputsTitle').innerText = "LBO Optimization Inputs";
             } else {
                 document.getElementById('btnInputWHBO').classList.add('active');
-                document.getElementById('inputsTitle').innerText = "WHBO Optimizasyon Girdileri";
+                document.getElementById('inputsTitle').innerText = "WHBO Optimization Inputs";
             }
             renderInputsTable();
         }
@@ -1786,7 +1845,7 @@
 
                 let dailyAgg = {};
                 rawData.forEach(row => {
-                    const d = row['Date'] || row['date'] || 'Günlük';
+                    const d = row['Date'] || row['date'] || 'Daily';
                     const prod = getSantralProduction(row, activePp);
                     const dynEffPrice = calculateDynamicEffPrice(row, activePp);
 
@@ -1815,6 +1874,7 @@
                 chart1_FD = renderEngine(document.getElementById('firstDayChart').getContext('2d'), chart1_FD, 'firstDayChartScrollbar', 'firstDayChartDayScrollbar', saatlerFD, kndFD, ptfFD, sfcFD, effFD, true);
                 chart2 = renderEngine(document.getElementById('blockChart').getContext('2d'), chart2, 'blockChartScrollbar', 'blockChartDayScrollbar', blockLabels, blockKnd, blockPtf, blockSfc, blockEff, false);
                 chart3 = renderStandardEngine(document.getElementById('dailyChart').getContext('2d'), chart3, dailyLabels, dailyKnd, dailyPtf, dailySfc, dailyEff);
+                chartHistogram = renderHistogramChart(kndAll, effAll);
                 
                 chartResH = renderReservoirEngine(document.getElementById('resHourlyChart').getContext('2d'), chartResH, 'resHourlyChartScrollbar', 'resHourlyChartDayScrollbar', resHoursLabels, resHoursMeters, resHoursData, true);
                 chartResD = renderStandardReservoir(document.getElementById('resDailyChart').getContext('2d'), chartResD, resDailyLabels, resDailyMeters, resDailyData);
@@ -1937,8 +1997,8 @@
                         const tolTxt = !isNaN(tolVal) ? ` (±%${(tolVal * 100).toFixed(0)})` : '';
                         targetTileHtml = `
                             <div class="inputs-summary-tile">
-                                <div class="summary-label">Hedef Üretim (Generation Target)</div>
-                                <div class="summary-value">${genVal.toLocaleString('tr-TR')} MWh${tolTxt}</div>
+                                <div class="summary-label">Generation Target</div>
+                                <div class="summary-value">${genVal.toLocaleString('en-US')} MWh${tolTxt}</div>
                             </div>`;
                     }
                 }
@@ -1961,21 +2021,21 @@
                         <div class="summary-value">${endLevel}</div>
                     </div>
                     <div class="inputs-summary-tile">
-                        <div class="summary-label">Çalışma Saati (Gerçekleşen)</div>
-                        <div class="summary-value">${hoursOperated} saat</div>
+                        <div class="summary-label">Hours Operated (Realized)</div>
+                        <div class="summary-value">${hoursOperated} hours</div>
                     </div>${targetTileHtml}`;
 
                 if (inputsGranularity === 'hourly') {
                     head.innerHTML = `
                         <tr>
-                            <th>Tarih / Saat</th>
+                            <th>Date / Hour</th>
                             <th>Feke Outflow (hm³)</th>
                             <th>Göktaş Outflow (hm³)</th>
                             <th>Inflow (hm³)</th>
                             <th>PTF (TL)</th>
-                            <th>SFK (TL)</th>
-                            <th>Santral Aktiflik Durumu</th>
-                            <th>Spillage Modu</th>
+                            <th>SFC (TL)</th>
+                            <th>Plant Active Status</th>
+                            <th>Spillage Mode</th>
                         </tr>`;
 
                     let html = "";
@@ -2011,14 +2071,14 @@
 
                     head.innerHTML = `
                         <tr>
-                            <th>Tarih</th>
+                            <th>Date</th>
                             <th>Feke Outflow (hm³)</th>
                             <th>Göktaş Outflow (hm³)</th>
                             <th>Daily Inflow (hm³)</th>
-                            <th>Ort. PTF (TL)</th>
-                            <th>Ort. SFK (TL)</th>
-                            <th>Santral Aktiflik Durumu</th>
-                            <th>Spillage Modu</th>
+                            <th>Avg. PTF (TL)</th>
+                            <th>Avg. SFC (TL)</th>
+                            <th>Plant Active Status</th>
+                            <th>Spillage Mode</th>
                         </tr>`;
 
                     let html = "";
@@ -2238,9 +2298,9 @@
                     const hoursTxt = (e.hours || []).slice().sort((a, b) => a - b).join(', ');
                     if (e.alsoCaughtSameDay) {
                         const caughtHoursTxt = (e.caughtHoursSameDay || []).slice().sort((a, b) => a - b).join(', ');
-                        return `${e.date} tarihinde SAAT ${hoursTxt}'te çalışılmadı (aynı blok o gün saat ${caughtHoursTxt}'te ${e.caughtModeSameDay} modunda ${e.caughtPriceSameDay.toFixed(0)} TL/MWh ile çalışmış - yani blok o gün KISMEN çalışmış)`;
+                        return `on ${e.date} it was NOT operated at HOUR ${hoursTxt} (the same block WAS operated that day at hour ${caughtHoursTxt} in ${e.caughtModeSameDay} mode at ${e.caughtPriceSameDay.toFixed(0)} TL/MWh - i.e. the block was PARTIALLY operated that day)`;
                     }
-                    return `${e.date} tarihinde (saat ${hoursTxt}) hiç çalışılmadı`;
+                    return `on ${e.date} (hour ${hoursTxt}) it was not operated at all`;
                 }
 
                 let caughtCellAvgs = [];
@@ -2493,41 +2553,41 @@
 
                     if (!hasCaught || !hasMissed) {
                         noteEl.classList.add('is-ok');
-                        noteEl.innerHTML = 'Karşılaştırma için hem yakalanan hem kaçırılan veri gerekiyor.';
+                        noteEl.innerHTML = 'Both caught and missed data are required for comparison.';
                     } else if (violations.length === 0) {
-                        // Asıl teyit kriteri blok-bazlı kontrolden geçti (hiçbiri %5'i aşmadı).
-                        // Buradaki Genel Min Caught / Genel Max Missed farklı bloklardan gelebileceği için
-                        // (elma-armut olabileceğinden) bu sayı %5 toleransına göre AYRICA değerlendirilmez -
-                        // sadece bilgi amaçlıdır, bu yüzden burada her zaman "Tutarlı" gösterilir.
+                        // The real checkpoint criterion already passed the block-based check (none exceeded 5%).
+                        // The Overall Min Caught / Overall Max Missed here may come from different blocks
+                        // (potentially apples-to-oranges), so this figure is NOT separately evaluated against
+                        // the 5% tolerance - it's informational only, so it's always shown as "Consistent" here.
                         noteEl.classList.add('is-ok');
                         const minSrcTxt = minCaughtSource ? `Block B${minCaughtSource.block}, ${minCaughtSource.date} (${minCaughtSource.mode})` : '-';
                         const maxSrcTxt = maxMissedSource ? `Block B${maxMissedSource.block}: ${describeMissedEntry(maxMissedSource)}` : '-';
-                        noteEl.innerHTML = `✓ Tutarlı: hiçbir blokta kendi Min Caught'ını %${(MODEL_GAP_TOLERANCE * 100).toFixed(0)} toleransın üzerinde aşan bir Max Missed yok.<br>` +
-                            `→ Genel Min Caught: <b>${minCaught.toFixed(0)} TL/MWh</b> (${minSrcTxt} fiyatla yakalanmış)<br>` +
-                            `→ Genel Max Missed: <b>${maxMissed.toFixed(0)} TL/MWh</b> (${maxSrcTxt})<br>` +
-                            `Bu iki değer farklı bloklardan geldiği için doğrudan karşılaştırılabilir değildir.`;
+                        noteEl.innerHTML = `✓ Consistent: no block has a Max Missed exceeding its own Min Caught by more than the %${(MODEL_GAP_TOLERANCE * 100).toFixed(0)} tolerance.<br>` +
+                            `→ Overall Min Caught: <b>${minCaught.toFixed(0)} TL/MWh</b> (caught at ${minSrcTxt})<br>` +
+                            `→ Overall Max Missed: <b>${maxMissed.toFixed(0)} TL/MWh</b> (${maxSrcTxt})<br>` +
+                            `These two values come from different blocks, so they are not directly comparable.`;
                     } else {
                         noteEl.classList.add('is-warning');
-                        let html = `<div class="checkpoint-violation-title">⚠️ ${violations.length} blokta, kendi Min Caught'ından %${(MODEL_GAP_TOLERANCE * 100).toFixed(0)} toleransın üzerinde bir Max Missed tespit edildi:</div>`;
+                        let html = `<div class="checkpoint-violation-title">⚠️ ${violations.length} block(s) found with a Max Missed exceeding their own Min Caught by more than %${(MODEL_GAP_TOLERANCE * 100).toFixed(0)} tolerance:</div>`;
                         violations.sort((a, b) => b.diffPct - a.diffPct);
                         violations.forEach(v => {
                             html += `<div class="checkpoint-violation-block">`;
-                            html += `<b>Block B${v.block}</b> — Min Caught: ${v.blockMinCaught.toFixed(0)} TL/MWh, Max Missed: ${v.worstMissed.price.toFixed(0)} TL/MWh (${v.worstMissed.date}) → <b>%${v.diffPct.toFixed(1)} fark</b>`;
+                            html += `<b>Block B${v.block}</b> — Min Caught: ${v.blockMinCaught.toFixed(0)} TL/MWh, Max Missed: ${v.worstMissed.price.toFixed(0)} TL/MWh (${v.worstMissed.date}) → <b>%${v.diffPct.toFixed(1)} difference</b>`;
                             if (v.hasBase) {
                                 const baseList = v.baseEntries.map(e => `${e.date}: ${e.price.toFixed(0)} TL/MWh`).join(', ');
-                                html += `<br>→ Bu blokta <b>Base modu çalışılmış</b>. Base çalışılan tarih/fiyatlar: ${baseList}.`;
+                                html += `<br>→ <b>Base mode was operated</b> in this block. Dates/prices when Base ran: ${baseList}.`;
                             } else {
                                 const sfcList = v.allCaught.map(e => `${e.date}: ${e.price.toFixed(0)} TL/MWh (${e.mode})`).join(', ');
-                                html += `<br>→ Bu blokta hiç Base modu çalışılmamış (sadece Sfc). Çalışılan tarih/fiyatlar: ${sfcList}.`;
+                                html += `<br>→ Base mode was never operated in this block (Sfc only). Dates/prices operated: ${sfcList}.`;
                             }
-                            html += `<br>→ Çalışılmayan (missed) en yüksek fiyat: <b>${v.worstMissed.price.toFixed(0)} TL/MWh</b> — ${describeMissedEntry(v.worstMissed)}.`;
+                            html += `<br>→ Highest missed price: <b>${v.worstMissed.price.toFixed(0)} TL/MWh</b> — ${describeMissedEntry(v.worstMissed)}.`;
                             html += `</div>`;
                         });
                         noteEl.innerHTML = html;
                     }
                 }
             } catch (matrixErr) {
-                console.error("Matris tablosu motor hatası:", matrixErr);
+                console.error("Matrix table engine error:", matrixErr);
             }
         }
 
@@ -2538,7 +2598,7 @@
                 head.innerHTML = ""; body.innerHTML = "";
 
                 if(activeTableTab === 'hourly') {
-                    head.innerHTML = `<tr><th>Tarih / Saat</th><th>Blok</th><th>Üretim (Generation)</th><th>PTF (TL/MWh)</th><th>SFC Fiyatı (TL/MWh)</th><th>Efektif Fiyat (TL/MWh)</th></tr>`;
+                    head.innerHTML = `<tr><th>Date / Hour</th><th>Block</th><th>Generation</th><th>PTF (TL/MWh)</th><th>SFC Price (TL/MWh)</th><th>Effective Price (TL/MWh)</th></tr>`;
                     let html = "";
                     firstDayData.forEach(row => {
                         const d = row['Date'] || row['date'] || ''; const h = row['Hour'] || row['hour'] || '0';
@@ -2548,10 +2608,10 @@
                     });
                     body.innerHTML = html;
                 } else if(activeTableTab === 'block') {
-                    head.innerHTML = `<tr><th>Blok Bilgisi</th><th>Toplam Üretim</th><th>Ortalama PTF (TL/MWh)</th><th>Ortalama SFC Fiyatı (TL/MWh)</th><th>Ağırlıklı Efektif Fiyat (TL/MWh)</th></tr>`;
+                    head.innerHTML = `<tr><th>Block Info</th><th>Total Generation</th><th>Average PTF (TL/MWh)</th><th>Average SFC Price (TL/MWh)</th><th>Weighted Effective Price (TL/MWh)</th></tr>`;
                     let blockAgg = {};
                     rawData.forEach(row => {
-                        const d = row['Date'] || row['date'] || ''; const b = row['Block'] || row['block'] || 'Belirsiz'; const k = `${d} B${b}`;
+                        const d = row['Date'] || row['date'] || ''; const b = row['Block'] || row['block'] || 'Unspecified'; const k = `${d} B${b}`;
                         const prod = getSantralProduction(row, activePp);
                         const effPrice = calculateDynamicEffPrice(row, activePp);
 
@@ -2573,10 +2633,10 @@
                     });
                     body.innerHTML = html;
                 } else if(activeTableTab === 'daily') {
-                    head.innerHTML = `<tr><th>Tarih</th><th>Toplam Üretim</th><th>Ortalama PTF (TL/MWh)</th><th>Ortalama SFC Fiyatı (TL/MWh)</th><th>Ağırlıklı Efektif Fiyat (TL/MWh)</th></tr>`;
+                    head.innerHTML = `<tr><th>Date</th><th>Total Generation</th><th>Average PTF (TL/MWh)</th><th>Average SFC Price (TL/MWh)</th><th>Weighted Effective Price (TL/MWh)</th></tr>`;
                     let dailyAgg = {};
                     rawData.forEach(row => {
-                        const d = row['Date'] || row['date'] || 'Günlük';
+                        const d = row['Date'] || row['date'] || 'Daily';
                         const prod = getSantralProduction(row, activePp);
                         const effPrice = calculateDynamicEffPrice(row, activePp);
 
@@ -2605,103 +2665,172 @@
             }
         }
 
+        // Fiyatı yeşil (düşük) -> sarı (orta) -> kırmızı (yüksek) arasında bir renge çevirir.
+        // Koşullu biçimlendirme (conditional formatting) mantığı - Excel'deki 3 renkli skala gibi.
+        function getPriceGradientColor(value, minVal, maxVal) {
+            if (value === null || value === undefined || isNaN(value) || value <= 0) return '#cbd5e1';
+            if (maxVal === minVal) return 'rgb(250, 204, 21)';
+            let t = (value - minVal) / (maxVal - minVal);
+            t = Math.max(0, Math.min(1, t));
+            let r, g;
+            if (t < 0.5) {
+                const k = t / 0.5;
+                r = Math.round(34 + (250 - 34) * k);
+                g = Math.round(197 + (204 - 197) * k);
+            } else {
+                const k = (t - 0.5) / 0.5;
+                r = Math.round(250 + (239 - 250) * k);
+                g = Math.round(204 + (68 - 204) * k);
+            }
+            const b = t < 0.5 ? Math.round(94 + (21 - 94) * (t / 0.5)) : Math.round(21 + (68 - 21) * ((t - 0.5) / 0.5));
+            return `rgb(${r}, ${g}, ${b})`;
+        }
+
+        // Yakalanan fiyatın ağırlığını (hangi fiyat aralığında ne kadar üretim/generation yapıldığını)
+        // gösteren histogram. X ekseni: yakalanan fiyat aralıkları (bin), Y ekseni: o aralıktaki
+        // toplam generation hacmi (MW).
+        function renderHistogramChart(kndData, effPriceData) {
+            const canvasEl = document.getElementById('histogramChart');
+            if (!canvasEl) return null;
+            const ctx = canvasEl.getContext('2d');
+            if (chartHistogram) chartHistogram.destroy();
+
+            const points = [];
+            for (let i = 0; i < effPriceData.length; i++) {
+                if (kndData[i] > 0 && effPriceData[i] > 0) {
+                    points.push({ price: effPriceData[i], volume: kndData[i] });
+                }
+            }
+
+            if (points.length === 0) {
+                return new Chart(ctx, { type: 'bar', data: { labels: [], datasets: [] }, options: { responsive: true, maintainAspectRatio: false } });
+            }
+
+            const prices = points.map(p => p.price);
+            const minP = Math.min(...prices);
+            const maxP = Math.max(...prices);
+            const binCount = Math.min(20, Math.max(5, Math.round(Math.sqrt(points.length))));
+            const binWidth = (maxP - minP) / binCount || 1;
+            const bins = Array(binCount).fill(0);
+            points.forEach(p => {
+                let idx = Math.floor((p.price - minP) / binWidth);
+                if (idx >= binCount) idx = binCount - 1;
+                if (idx < 0) idx = 0;
+                bins[idx] += p.volume;
+            });
+            const binLabels = bins.map((_, i) => `${Math.round(minP + i * binWidth)}-${Math.round(minP + (i + 1) * binWidth)}`);
+            const binColors = bins.map((_, i) => getPriceGradientColor(minP + (i + 0.5) * binWidth, minP, maxP));
+
+            return new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: binLabels,
+                    datasets: [{
+                        label: `${activePp} Generation Volume by Caught Price`,
+                        data: bins,
+                        backgroundColor: binColors,
+                        barPercentage: 1.0, categoryPercentage: 0.95
+                    }]
+                },
+                options: {
+                    responsive: true, maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false },
+                        datalabels: { display: false },
+                        tooltip: {
+                            callbacks: {
+                                label: function(ctx) { return `Volume: ${ctx.raw.toLocaleString('en-US', { maximumFractionDigits: 0 })} MW`; }
+                            }
+                        }
+                    },
+                    scales: {
+                        x: {
+                            title: { display: true, text: 'Caught Price (TL/MWh)', font: { size: 13, weight: '700' } },
+                            ticks: { font: { size: 11, weight: '700' }, color: '#0f172a' },
+                            grid: { display: false }
+                        },
+                        y: {
+                            title: { display: true, text: 'Generation Volume (MW)', font: { size: 13, weight: '700' } },
+                            ticks: { font: { size: 12, weight: '700' } }, grid: { color: '#e2e8f0' }
+                        }
+                    }
+                }
+            });
+        }
+
         function renderEngine(ctx, chartInstance, scrollbarId, dayScrollbarId, labels, kndData, ptfData, sfcData, effPriceData, isHourly) {
             if (chartInstance) { chartInstance.destroy(); }
             
-            const maxProduction = Math.max(...kndData, 10) * 1.4;
+            const maxProduction = Math.max(...kndData, 10) * 1.15;
             const maxPrice = Math.max(...ptfData, ...sfcData, 100) * 1.15;
-            const visibleCount = 30;
+
+            // Bar renklerini yakalanan fiyata göre koşullu biçimlendir (en düşük fiyat yeşil,
+            // en yüksek fiyat kırmızı, ortası sarı) - etiket yerine barın kendi renginden takip edilir.
+            const positiveEffPrices = (effPriceData || []).filter(v => v > 0);
+            const priceMin = positiveEffPrices.length > 0 ? Math.min(...positiveEffPrices) : 0;
+            const priceMax = positiveEffPrices.length > 0 ? Math.max(...positiveEffPrices) : 1;
+            const barColors = kndData.map((v, i) => {
+                const ep = effPriceData ? effPriceData[i] : 0;
+                return getPriceGradientColor(ep, priceMin, priceMax);
+            });
 
             const datasets = [
                 {
-                    type: 'bar', label: `${activePp} Üretim (MW)`, data: kndData, backgroundColor: '#0c4a6e', yAxisID: 'y', order: 3,
-                    datalabels: {
-                        display: function(context) {
-                            const v = context.dataset.data[context.dataIndex];
-                            return v !== null && v !== undefined && v !== 0;
-                        },
-                        align: 'top', anchor: 'end', color: '#000000', rotation: -90, offset: 20, 
-                        font: { size: 12, weight: '700' }, 
-                        formatter: function(value, context) {
-                            const effPrice = effPriceData ? effPriceData[context.dataIndex] : 0;
-                            return effPrice > 0 ? effPrice.toFixed(0) + " TL" : "";
-                        }
-                    }
+                    type: 'bar', label: `${activePp} Generation (MW)`, data: kndData, backgroundColor: barColors, yAxisID: 'y', order: 3,
+                    datalabels: { display: false }
                 },
-                { type: 'line', label: 'PTF', data: ptfData, borderColor: '#f97316', borderWidth: 2.5, pointRadius: isHourly ? 3 : 5, backgroundColor: 'transparent', yAxisID: 'y1', tension: 0.1, order: 1, datalabels: { display: false } },
-                { type: 'line', label: 'SFK', data: sfcData, borderColor: '#10b981', borderWidth: 2, pointRadius: isHourly ? 2 : 4, borderDash: [4, 4], backgroundColor: 'transparent', yAxisID: 'y1', tension: 0.1, order: 2, datalabels: { display: false } }
+                { type: 'line', label: 'PTF', data: ptfData, borderColor: '#f97316', borderWidth: 2.5, pointRadius: isHourly ? 2 : 4, backgroundColor: 'transparent', yAxisID: 'y1', tension: 0.1, order: 1, datalabels: { display: false } },
+                { type: 'line', label: 'SFC', data: sfcData, borderColor: '#10b981', borderWidth: 2, pointRadius: isHourly ? 1 : 3, borderDash: [4, 4], backgroundColor: 'transparent', yAxisID: 'y1', tension: 0.1, order: 2, datalabels: { display: false } }
             ];
 
             const chart = new Chart(ctx, {
                 data: { labels: labels, datasets: datasets },
                 options: {
                     responsive: true, maintainAspectRatio: false,
-                    layout: { padding: { top: 110, bottom: 5, left: 15, right: 15 } },
+                    layout: { padding: { top: 15, bottom: 5, left: 15, right: 15 } },
                     plugins: {
-                        legend: { display: true, position: 'bottom', labels: { boxWidth: 15, font: { size: 14, weight: '700' }, color: '#0f172a' } },
-                        datalabels: { clip: false },
-                        zoom: {
-                            pan: { enabled: true, mode: 'x', threshold: 10 },
-                            zoom: { wheel: { enabled: false }, pinch: { enabled: false }, mode: 'x' }
-                        }
+                        legend: { display: true, position: 'bottom', labels: { boxWidth: 15, font: { size: 13, weight: '700' }, color: '#0f172a' } },
+                        datalabels: { display: false },
+                        tooltip: {
+                            callbacks: {
+                                afterBody: function(items) {
+                                    const idx = items[0].dataIndex;
+                                    const ep = effPriceData ? effPriceData[idx] : 0;
+                                    return ep > 0 ? [`Caught Price: ${ep.toFixed(0)} TL/MWh`] : [];
+                                }
+                            }
+                        },
+                        zoom: { pan: { enabled: false }, zoom: { wheel: { enabled: false }, pinch: { enabled: false } } }
                     },
                     scales: {
                         x: { 
                             grid: { display: false }, 
-                            ticks: { maxRotation: 90, minRotation: 90, font: { size: 12, weight: '700' }, color: '#0f172a' },
-                            min: 0, max: Math.min(labels.length - 1, visibleCount - 1) 
+                            ticks: { autoSkip: true, maxRotation: 60, minRotation: 0, font: { size: 11, weight: '700' }, color: '#0f172a' },
+                            min: 0, max: labels.length - 1
                         }, 
                         y: { 
                             type: 'linear', position: 'left', min: 0, max: maxProduction,
-                            title: { display: true, text: 'Üretim Hacmi (MW)', font: { size: 13, weight: '700' } }, 
+                            title: { display: true, text: 'Generation Volume (MW)', font: { size: 13, weight: '700' } }, 
                             ticks: { font: { size: 12, weight: '700' } }, grid: { color: '#e2e8f0' }
                         },
                         y1: { 
                             type: 'linear', position: 'right', min: 0, max: maxPrice,
-                            title: { display: true, text: 'Fiyat (TL/MWh)', font: { size: 13, weight: '700' } }, 
+                            title: { display: true, text: 'Price (TL/MWh)', font: { size: 13, weight: '700' } }, 
                             ticks: { font: { size: 12, weight: '700' } }, grid: { drawOnChartArea: false } 
                         }
                     }
                 }
             });
 
+            // Tek sayfaya sığdığı ve kaydırma (scroll) gerekmediği için eski scrollbar kontrolleri artık
+            // gizleniyor - tüm veri tek görselde, barın renginden takip ediliyor.
             const scrollbar = document.getElementById(scrollbarId);
             const dayScrollbar = document.getElementById(dayScrollbarId);
-
-            function updateScrollbars(minVal) {
-                if (scrollbar) scrollbar.value = minVal;
-                if (dayScrollbar) dayScrollbar.value = Math.floor(minVal / 24);
-            }
-
-            if (scrollbar) {
-                scrollbar.max = Math.max(0, labels.length - visibleCount);
-                scrollbar.value = 0;
-                scrollbar.oninput = function() {
-                    const min = parseInt(this.value, 10);
-                    chart.options.scales.x.min = min;
-                    chart.options.scales.x.max = min + (visibleCount - 1);
-                    chart.update('none');
-                    updateScrollbars(min);
-                };
-            }
-
-            if (dayScrollbar) {
-                const totalDays = Math.max(0, Math.floor((labels.length - visibleCount) / 24));
-                dayScrollbar.max = totalDays;
-                dayScrollbar.value = 0;
-                dayScrollbar.oninput = function() {
-                    const dayIndex = parseInt(this.value, 10);
-                    const min = dayIndex * 24;
-                    chart.options.scales.x.min = min;
-                    chart.options.scales.x.max = Math.min(labels.length - 1, min + (visibleCount - 1));
-                    chart.update('none');
-                    if (scrollbar) scrollbar.value = min;
-                };
-            }
-
-            chart.options.plugins.zoom.pan.onPan = function() {
-                updateScrollbars(Math.round(chart.scales.x.min));
-            };
+            [scrollbar, dayScrollbar].forEach(el => {
+                if (el && el.closest('.chart-scrollbar-wrapper')) {
+                    el.closest('.chart-scrollbar-wrapper').style.display = 'none';
+                }
+            });
 
             return chart;
         }
@@ -2794,39 +2923,45 @@
             return chart;
         }
 
-        // --- DÜZELTİLMİŞ STANDART GÜNLÜK GRAFİK MOTORU ---
+        // --- STANDARD DAILY CHART ENGINE ---
         function renderStandardEngine(ctx, chartInstance, labels, kndData, ptfData, sfcData, effPriceData) {
             if (chartInstance) chartInstance.destroy();
+            const positiveEffPrices = (effPriceData || []).filter(v => v > 0);
+            const priceMin = positiveEffPrices.length > 0 ? Math.min(...positiveEffPrices) : 0;
+            const priceMax = positiveEffPrices.length > 0 ? Math.max(...positiveEffPrices) : 1;
+            const barColors = kndData.map((v, i) => getPriceGradientColor(effPriceData ? effPriceData[i] : 0, priceMin, priceMax));
             return new Chart(ctx, {
                 data: {
                     labels: labels,
                     datasets: [
                         {
-                            type: 'bar', label: `${activePp} Üretim (MW)`, data: kndData, backgroundColor: '#0c4a6e', yAxisID: 'y', order: 3,
-                            datalabels: {
-                                display: true, align: 'top', anchor: 'end', color: '#000000', rotation: -90, offset: 20, 
-                                font: { size: 12, weight: '700' }, 
-                                formatter: (v, context) => {
-                                    const val = effPriceData ? effPriceData[context.dataIndex] : 0;
-                                    return val > 0 ? val.toFixed(0) + " TL" : "";
-                                }
-                            }
+                            type: 'bar', label: `${activePp} Generation (MW)`, data: kndData, backgroundColor: barColors, yAxisID: 'y', order: 3,
+                            datalabels: { display: false }
                         },
-                        { type: 'line', label: 'PTF', data: ptfData, borderColor: '#f97316', borderWidth: 2.5, pointRadius: 5, backgroundColor: 'transparent', yAxisID: 'y1', tension: 0.1, order: 1, datalabels: { display: false } },
-                        { type: 'line', label: 'SFK', data: sfcData, borderColor: '#10b981', borderWidth: 2, pointRadius: 4, borderDash: [4, 4], backgroundColor: 'transparent', yAxisID: 'y1', tension: 0.1, order: 2, datalabels: { display: false } }
+                        { type: 'line', label: 'PTF', data: ptfData, borderColor: '#f97316', borderWidth: 2.5, pointRadius: 4, backgroundColor: 'transparent', yAxisID: 'y1', tension: 0.1, order: 1, datalabels: { display: false } },
+                        { type: 'line', label: 'SFC', data: sfcData, borderColor: '#10b981', borderWidth: 2, pointRadius: 3, borderDash: [4, 4], backgroundColor: 'transparent', yAxisID: 'y1', tension: 0.1, order: 2, datalabels: { display: false } }
                     ]
                 },
                 options: {
                     responsive: true, maintainAspectRatio: false,
-                    layout: { padding: { top: 110, bottom: 5, left: 15, right: 15 } },
+                    layout: { padding: { top: 15, bottom: 5, left: 15, right: 15 } },
                     plugins: {
                         legend: { position: 'bottom', labels: { boxWidth: 15, font: { size: 14, weight: '700' } } },
-                        datalabels: { clip: false }
+                        datalabels: { display: false },
+                        tooltip: {
+                            callbacks: {
+                                afterBody: function(items) {
+                                    const idx = items[0].dataIndex;
+                                    const ep = effPriceData ? effPriceData[idx] : 0;
+                                    return ep > 0 ? [`Caught Price: ${ep.toFixed(0)} TL/MWh`] : [];
+                                }
+                            }
+                        }
                     },
                     scales: {
                         x: { ticks: { font: { size: 12, weight: '700' } } },
-                        y: { type: 'linear', position: 'left', title: { display: true, text: 'Üretim Hacmi (MW)' } },
-                        y1: { type: 'linear', position: 'right', title: { display: true, text: 'Fiyat (TL/MWh)' } }
+                        y: { type: 'linear', position: 'left', title: { display: true, text: 'Generation Volume (MW)' } },
+                        y1: { type: 'linear', position: 'right', title: { display: true, text: 'Price (TL/MWh)' } }
                     }
                 }
             });
