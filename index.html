@@ -23,11 +23,15 @@
             --bg: #eef2f6;
             --card: #ffffff;
             --text: #1e293b;
+            --text-secondary: #475569;
             --muted: #64748b;
+            --muted-soft: #94a3b8;
             --border: #e2e8f0;
             --radius: 12px;
             --shadow-sm: 0 1px 2px rgba(15, 23, 42, 0.06), 0 1px 3px rgba(15, 23, 42, 0.04);
             --shadow-md: 0 4px 12px rgba(15, 23, 42, 0.08), 0 1px 3px rgba(15, 23, 42, 0.06);
+            --font-heading: 'Manrope', 'Inter', sans-serif;
+            --font-body: 'Inter', 'Segoe UI', system-ui, sans-serif;
         }
 
         * { -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale; }
@@ -36,11 +40,17 @@
             max-width: 100%;
             overflow-x: hidden;
             background-color: var(--bg);
+            background-image:
+                radial-gradient(900px 500px at 100% -10%, rgba(27, 117, 188, 0.08), transparent 60%),
+                radial-gradient(700px 500px at -5% 15%, rgba(56, 189, 248, 0.06), transparent 55%);
+            background-attachment: fixed;
             color: var(--text);
             margin: 0;
             padding: 0;
-            font-family: 'Inter', 'Segoe UI', system-ui, sans-serif;
+            font-family: var(--font-body);
             font-size: 14px;
+            line-height: 1.55;
+            font-variant-numeric: tabular-nums;
             text-rendering: optimizeLegibility;
             -webkit-text-size-adjust: 100%;
         }
@@ -65,6 +75,13 @@
             position: sticky;
             top: 0;
             z-index: 50;
+            position: sticky;
+            border-bottom: 2px solid transparent;
+            background-image:
+                linear-gradient(135deg, var(--primary) 0%, var(--primary-soft) 100%),
+                linear-gradient(90deg, #38bdf8 0%, var(--accent) 45%, #38bdf8 100%);
+            background-origin: border-box;
+            background-clip: padding-box, border-box;
         }
         .navbar span:first-child {
             display: flex;
@@ -109,9 +126,15 @@
             gap: 10px;
             padding: 5px 16px 5px 6px;
             border-radius: 999px;
-            background: rgba(255, 255, 255, 0.06);
-            border: 1px solid rgba(255, 255, 255, 0.14);
+            background: rgba(255, 255, 255, 0.07);
+            border: 1px solid rgba(255, 255, 255, 0.16);
+            box-shadow: inset 0 1px 0 rgba(255,255,255,0.08), 0 2px 8px rgba(0,0,0,0.12);
             flex-shrink: 0;
+            transition: border-color 0.2s ease, background 0.2s ease;
+        }
+        .brand-logo:hover {
+            border-color: rgba(56, 189, 248, 0.4);
+            background: rgba(255, 255, 255, 0.1);
         }
         .brand-logo-icon {
             width: 32px;
@@ -121,7 +144,7 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            box-shadow: 0 3px 10px rgba(56, 189, 248, 0.35), inset 0 1px 0 rgba(255,255,255,0.25);
+            box-shadow: 0 0 0 3px rgba(56, 189, 248, 0.14), 0 3px 10px rgba(56, 189, 248, 0.4), inset 0 1px 0 rgba(255,255,255,0.25);
             flex-shrink: 0;
         }
         .brand-logo-icon svg { width: 18px; height: 18px; }
@@ -161,10 +184,10 @@
         .full-width { grid-column: span 2; }
         
         .upload-section {
-            background: var(--card);
-            padding: 18px 22px;
-            border-radius: var(--radius);
-            box-shadow: var(--shadow-sm);
+            background: linear-gradient(180deg, #ffffff 0%, #fbfdff 100%);
+            padding: 20px 24px;
+            border-radius: 14px;
+            box-shadow: 0 1px 2px rgba(15,23,42,0.05), 0 10px 24px -12px rgba(27, 117, 188, 0.18);
             border: 1px solid var(--border);
             display: flex;
             align-items: center;
@@ -175,6 +198,45 @@
             width: 100%;
             box-sizing: border-box;
             flex-wrap: wrap;
+        }
+        .upload-section::before {
+            content: "";
+            position: absolute;
+            top: 0; left: 0; right: 0;
+            height: 3px;
+            background: linear-gradient(90deg, var(--accent) 0%, #38bdf8 50%, var(--accent) 100%);
+        }
+        .upload-section-label {
+            font-family: var(--font-heading);
+            font-size: 10.5px;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: var(--muted-soft);
+            flex-basis: 100%;
+            margin-bottom: -4px;
+        }
+        .upload-status {
+            font-size: 12.5px;
+            font-weight: 700;
+            padding: 5px 12px;
+            border-radius: 999px;
+            white-space: nowrap;
+        }
+        .upload-status--pending {
+            background: #fff7ed;
+            color: #c2410c;
+            border: 1px solid #fed7aa;
+        }
+        .upload-status--optional {
+            background: #f1f5f9;
+            color: var(--muted);
+            border: 1px solid var(--border);
+        }
+        .upload-status--success {
+            background: #ecfdf5;
+            color: #047857;
+            border: 1px solid #a7f3d0;
         }
 
         .upload-group {
@@ -315,22 +377,40 @@
             background: linear-gradient(135deg, var(--accent) 0%, var(--accent-dark) 100%);
             color: white;
             padding: 12px 22px;
-            font-size: 13px;
+            font-size: 12.5px;
             font-weight: 700;
-            border-radius: 8px;
+            letter-spacing: 0.3px;
+            border-radius: 9px;
             cursor: pointer;
             border: none;
-            box-shadow: 0 2px 6px rgba(27, 117, 188, 0.3);
+            box-shadow: 0 2px 6px rgba(27, 117, 188, 0.35), 0 8px 18px -8px rgba(27, 117, 188, 0.55), inset 0 1px 0 rgba(255,255,255,0.2);
             transition: transform 0.15s ease, box-shadow 0.15s ease;
             white-space: nowrap;
             flex-shrink: 0;
             display: inline-flex;
             align-items: center;
             gap: 8px;
+            position: relative;
+            overflow: hidden;
         }
+        .upload-btn::after {
+            content: "";
+            position: absolute;
+            top: 0; left: -60%;
+            width: 40%; height: 100%;
+            background: linear-gradient(120deg, transparent, rgba(255,255,255,0.25), transparent);
+            transform: skewX(-20deg);
+            transition: left 0.5s ease;
+        }
+        .upload-btn:hover::after { left: 140%; }
         .upload-btn.input-btn {
-            background: linear-gradient(135deg, #10b981 0%, #047857 100%);
-            box-shadow: 0 2px 6px rgba(16, 185, 129, 0.3);
+            background: transparent;
+            color: var(--accent-dark);
+            border: 1.5px solid #a7d0e8;
+            box-shadow: none;
+        }
+        .upload-btn.input-btn::before {
+            background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23145a92' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M12 3v12'/%3E%3Cpath d='M7 8l5-5 5 5'/%3E%3Cpath d='M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2'/%3E%3C/svg%3E") no-repeat center / contain;
         }
         .upload-btn::before {
             content: "";
@@ -339,7 +419,7 @@
             background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M12 3v12'/%3E%3Cpath d='M7 8l5-5 5 5'/%3E%3Cpath d='M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2'/%3E%3C/svg%3E") no-repeat center / contain;
         }
         .upload-btn:hover { transform: translateY(-1px); box-shadow: 0 4px 10px rgba(27, 117, 188, 0.38); }
-        .upload-btn.input-btn:hover { box-shadow: 0 4px 10px rgba(16, 185, 129, 0.38); }
+        .upload-btn.input-btn:hover { background: var(--accent-soft); box-shadow: none; }
         
         .sidebar {
             background: var(--card);
@@ -353,9 +433,10 @@
         }
         .sidebar h3 {
             margin: 0 0 15px 0;
-            font-size: 12px;
+            font-family: var(--font-heading);
+            font-size: 11.5px;
             text-transform: uppercase;
-            letter-spacing: 0.6px;
+            letter-spacing: 0.8px;
             border-bottom: 2px solid var(--border);
             padding-bottom: 10px;
             color: var(--muted);
@@ -370,9 +451,9 @@
             display: flex;
             align-items: center;
             gap: 10px;
-            font-weight: 700;
+            font-weight: 600;
             cursor: pointer;
-            font-size: 14.5px;
+            font-size: 14px;
             padding: 9px 12px;
             border-radius: 8px;
             transition: background 0.15s ease, color 0.15s ease;
@@ -395,6 +476,7 @@
             padding: 8px 4px;
             font-size: 11.5px;
             font-weight: 700;
+            letter-spacing: 0.2px;
             border-radius: 7px;
             cursor: pointer;
             transition: all 0.15s ease;
@@ -438,10 +520,12 @@
         .tab-btn {
             background-color: #ffffff;
             color: var(--muted);
+            font-family: var(--font-heading);
             border: 1px solid var(--border);
             padding: 11px 22px;
             font-size: 13.5px;
             font-weight: 700;
+            letter-spacing: 0.1px;
             border-radius: 8px;
             cursor: pointer;
             transition: all 0.15s ease;
@@ -452,16 +536,18 @@
             background: linear-gradient(135deg, var(--accent) 0%, var(--accent-dark) 100%);
             color: white;
             border-color: transparent;
-            box-shadow: 0 3px 8px rgba(27, 117, 188, 0.28);
+            box-shadow: 0 3px 8px rgba(27, 117, 188, 0.3), 0 0 0 3px rgba(27, 117, 188, 0.12);
         }
         
         .sub-btn {
             background-color: #eef2f6;
-            color: #475569;
+            color: var(--text-secondary);
+            font-family: var(--font-heading);
             border: 1px solid transparent;
             padding: 8px 16px;
             font-size: 12.5px;
             font-weight: 700;
+            letter-spacing: 0.1px;
             border-radius: 6px;
             cursor: pointer;
             transition: all 0.15s ease;
@@ -477,10 +563,16 @@
         }
         .inputs-summary-tile {
             flex: 1 1 160px;
-            background: var(--accent-soft);
+            background: linear-gradient(160deg, var(--accent-soft) 0%, #ffffff 100%);
             border: 1px solid var(--border);
+            border-left: 3px solid var(--accent);
             border-radius: 10px;
             padding: 12px 18px;
+            transition: transform 0.15s ease, box-shadow 0.15s ease;
+        }
+        .inputs-summary-tile:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 16px -8px rgba(27, 117, 188, 0.3);
         }
         .inputs-summary-tile .summary-label {
             font-size: 10.5px;
@@ -491,8 +583,10 @@
             margin-bottom: 4px;
         }
         .inputs-summary-tile .summary-value {
-            font-size: 18px;
+            font-family: var(--font-heading);
+            font-size: 19px;
             font-weight: 800;
+            letter-spacing: -0.2px;
             color: var(--accent-dark);
         }
 
@@ -506,11 +600,18 @@
             box-shadow: var(--shadow-sm);
             border: 1px solid var(--border);
             box-sizing: border-box;
+            transition: box-shadow 0.2s ease, transform 0.2s ease, border-color 0.2s ease;
+        }
+        .card:hover {
+            box-shadow: 0 12px 28px -14px rgba(15, 23, 42, 0.16), 0 2px 6px rgba(15,23,42,0.05);
+            border-color: #d3dde8;
         }
         
         .card-title { 
-            font-size: 15px; 
-            font-weight: 700; 
+            font-family: var(--font-heading);
+            font-size: 16px; 
+            font-weight: 800; 
+            letter-spacing: -0.1px;
             color: var(--primary); 
             margin: 0 0 18px 0; 
             border-bottom: 1px solid var(--border); 
@@ -522,9 +623,10 @@
         .card-title::before {
             content: "";
             width: 4px;
-            height: 15px;
+            height: 16px;
             border-radius: 2px;
-            background: var(--accent);
+            background: linear-gradient(180deg, #38bdf8, var(--accent-dark));
+            box-shadow: 0 0 8px rgba(27, 117, 188, 0.4);
             display: inline-block;
         }
 
@@ -604,19 +706,120 @@
             border: 1px solid var(--border);
             border-top: none;
         }
+        .checkpoint-card { padding-bottom: 20px; }
+
+        .confetti-container {
+            position: fixed;
+            top: 0; left: 0;
+            width: 100vw; height: 100vh;
+            pointer-events: none;
+            z-index: 9999;
+            overflow: hidden;
+        }
+        .confetti-piece {
+            position: absolute;
+            top: -24px;
+            border-radius: 2px;
+            animation-name: confettiFall;
+            animation-timing-function: cubic-bezier(0.35, 0.05, 0.6, 1);
+            animation-fill-mode: forwards;
+        }
+        @keyframes confettiFall {
+            0% { transform: translateY(-24px) rotate(0deg); opacity: 1; }
+            100% { transform: translateY(105vh) rotate(720deg); opacity: 0.85; }
+        }
+        .checkpoint-summary {
+            display: flex;
+            gap: 16px;
+            flex-wrap: wrap;
+        }
+        .checkpoint-tile {
+            flex: 1 1 240px;
+            border-radius: 10px;
+            padding: 14px 18px;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            border: 1px solid var(--border);
+        }
+        .checkpoint-tile--caught {
+            background: linear-gradient(160deg, #ecfdf5 0%, #ffffff 100%);
+            border-left: 3px solid #10b981;
+        }
+        .checkpoint-tile--missed {
+            background: linear-gradient(160deg, #fef2f2 0%, #ffffff 100%);
+            border-left: 3px solid #ef4444;
+        }
+        .checkpoint-label {
+            font-size: 11.5px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.4px;
+            color: var(--muted);
+        }
+        .checkpoint-value {
+            font-family: var(--font-heading);
+            font-size: 22px;
+            font-weight: 800;
+            color: var(--primary);
+        }
+        .checkpoint-note {
+            margin-top: 14px;
+            padding: 10px 14px;
+            border-radius: 8px;
+            font-size: 12.5px;
+            font-weight: 700;
+            display: none;
+        }
+        .checkpoint-note.is-ok {
+            display: block;
+            background: #ecfdf5;
+            color: #047857;
+            border: 1px solid #a7f3d0;
+        }
+        .checkpoint-note.is-warning {
+            display: block;
+            background: #fff7ed;
+            color: #c2410c;
+            border: 1px solid #fed7aa;
+        }
+        .checkpoint-note.is-tolerance {
+            display: block;
+            background: #eff6ff;
+            color: #1d4ed8;
+            border: 1px solid #bfdbfe;
+        }
+        .checkpoint-violation-title {
+            font-size: 13px;
+            font-weight: 800;
+            margin-bottom: 8px;
+        }
+        .checkpoint-violation-block {
+            font-size: 12px;
+            font-weight: 500;
+            line-height: 1.6;
+            padding: 8px 10px;
+            margin-bottom: 6px;
+            background: rgba(255,255,255,0.55);
+            border: 1px solid #fed7aa;
+            border-radius: 6px;
+        }
+        .checkpoint-violation-block:last-child { margin-bottom: 0; }
+
         .matrix-title-banner {
             background: linear-gradient(135deg, var(--accent) 0%, var(--accent-dark) 100%);
             color: white;
             padding: 12px 15px;
-            font-weight: 700;
+            font-family: var(--font-heading);
+            font-weight: 800;
             font-size: 13.5px;
             text-align: center;
             border-radius: 10px 10px 0 0;
-            letter-spacing: 0.4px;
+            letter-spacing: 0.5px;
         }
         table { width: 100%; border-collapse: collapse; text-align: center; }
-        th { background-color: #f1f5f9; color: var(--primary); padding: 10px; font-size: 11.5px; font-weight: 700; border: 1px solid #dbe2ea; position: sticky; top: 0; }
-        td { padding: 9px 10px; font-size: 12px; border: 1px solid #e7ecf2; font-weight: 600; line-height: 1.3; }
+        th { background-color: #f1f5f9; color: var(--primary); padding: 10px; font-size: 11px; font-weight: 700; letter-spacing: 0.3px; border: 1px solid #dbe2ea; position: sticky; top: 0; }
+        td { padding: 9px 10px; font-size: 12px; color: var(--text-secondary); border: 1px solid #e7ecf2; font-weight: 500; line-height: 1.3; }
         tbody tr:nth-child(even) td { background-color: #fafbfd; }
         tbody tr:hover td { background-color: var(--accent-soft); }
         .hour-header { background-color: #dde6ef; font-weight: 700; border: 1px solid #c9d4e0; }
@@ -651,16 +854,17 @@
 
     <div class="container full-width">
         <div class="upload-section">
+            <div class="upload-section-label">Veri Kaynakları</div>
             <div class="upload-group">
                 <label for="csvFile" class="upload-btn">Results.csv Yükle</label>
                 <input type="file" id="csvFile" accept=".csv" style="display:none;" onchange="handleFile(this)">
-                <span id="fileNameDisplay" style="font-size: 13px; color: #475569; font-weight: 600;">Please load Results.csv</span>
+                <span id="fileNameDisplay" class="upload-status upload-status--pending">Bekleniyor · Results.csv</span>
             </div>
             
             <div class="upload-group">
                 <label for="inputFile" class="upload-btn input-btn">Input Dosyası Yükle (LBO/WHBO)</label>
                 <input type="file" id="inputFile" accept=".csv" style="display:none;" onchange="handleInputFile(this)">
-                <span id="inputFileNameDisplay" style="font-size: 13px; color: #475569; font-weight: 600;">Opsiyonel Girdi Gerekli</span>
+                <span id="inputFileNameDisplay" class="upload-status upload-status--optional">Opsiyonel</span>
             </div>
 
             <div class="hydro-emojis">
@@ -793,6 +997,20 @@
 
             <!-- PANEL 3: CAUGHT-MISSED MATRIS ALANI -->
             <div id="panelCaughtMissed" class="view-panel">
+                <div class="card checkpoint-card">
+                    <div class="card-title">Teyit Noktası (Min Caught / Max Missed)</div>
+                    <div class="checkpoint-summary">
+                        <div class="checkpoint-tile checkpoint-tile--caught">
+                            <span class="checkpoint-label">En Düşük Yakalanan Fiyat (Min Caught)</span>
+                            <span class="checkpoint-value" id="minCaughtValue">-</span>
+                        </div>
+                        <div class="checkpoint-tile checkpoint-tile--missed">
+                            <span class="checkpoint-label">En Yüksek Kaçırılan Fiyat (Max Missed)</span>
+                            <span class="checkpoint-value" id="maxMissedValue">-</span>
+                        </div>
+                    </div>
+                    <div class="checkpoint-note" id="checkpointNote"></div>
+                </div>
                 <div class="card">
                     <div id="matrix1-banner" class="matrix-title-banner">-</div>
                     <div class="matrix-container">
@@ -886,9 +1104,115 @@
         
         Chart.register(ChartDataLabels);
 
+        // --- Basit ses efekti motoru (Web Audio API ile, dış ses dosyası gerektirmez) ---
+        let audioCtx = null;
+        function getAudioCtx() {
+            if (!audioCtx) {
+                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            }
+            if (audioCtx.state === 'suspended') audioCtx.resume();
+            return audioCtx;
+        }
+
+        function playTone({ freqStart, freqEnd, duration, type = 'sine', volume = 0.18, delay = 0 }) {
+            const ctx = getAudioCtx();
+            const startTime = ctx.currentTime + delay;
+            const osc = ctx.createOscillator();
+            const gain = ctx.createGain();
+            osc.type = type;
+            osc.frequency.setValueAtTime(freqStart, startTime);
+            if (freqEnd !== undefined) {
+                osc.frequency.exponentialRampToValueAtTime(Math.max(freqEnd, 1), startTime + duration);
+            }
+            gain.gain.setValueAtTime(0, startTime);
+            gain.gain.linearRampToValueAtTime(volume, startTime + 0.008);
+            gain.gain.exponentialRampToValueAtTime(0.001, startTime + duration);
+            osc.connect(gain);
+            gain.connect(ctx.destination);
+            osc.start(startTime);
+            osc.stop(startTime + duration + 0.02);
+        }
+
+        function playNoiseBurst({ duration = 0.25, volume = 0.15, filterFreq = 1200, delay = 0, attack = 0.01 }) {
+            const ctx = getAudioCtx();
+            const startTime = ctx.currentTime + delay;
+            const bufferSize = Math.max(1, Math.floor(ctx.sampleRate * duration));
+            const buffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
+            const data = buffer.getChannelData(0);
+            for (let i = 0; i < bufferSize; i++) data[i] = Math.random() * 2 - 1;
+            const noise = ctx.createBufferSource();
+            noise.buffer = buffer;
+            const filter = ctx.createBiquadFilter();
+            filter.type = 'bandpass';
+            filter.frequency.value = filterFreq;
+            const gain = ctx.createGain();
+            const safeAttack = Math.min(attack, duration * 0.3);
+            gain.gain.setValueAtTime(0, startTime);
+            gain.gain.linearRampToValueAtTime(volume, startTime + safeAttack);
+            gain.gain.exponentialRampToValueAtTime(0.001, startTime + duration);
+            noise.connect(filter);
+            filter.connect(gain);
+            gain.connect(ctx.destination);
+            noise.start(startTime);
+            noise.stop(startTime + duration);
+        }
+
+        const soundEffects = {
+            mountain: () => {
+                playTone({ freqStart: 95, freqEnd: 50, duration: 0.9, type: 'sine', volume: 0.16 });
+                playNoiseBurst({ duration: 0.9, volume: 0.05, filterFreq: 200 });
+            },
+            drop: () => {
+                playTone({ freqStart: 1250, freqEnd: 320, duration: 0.26, type: 'sine', volume: 0.2 });
+            },
+            flood: () => {
+                playNoiseBurst({ duration: 1.1, volume: 0.14, filterFreq: 650 });
+                playTone({ freqStart: 300, freqEnd: 110, duration: 1.1, type: 'sine', volume: 0.08 });
+            },
+            lightning: () => {
+                playNoiseBurst({ duration: 0.16, volume: 0.22, filterFreq: 3200 });
+                playTone({ freqStart: 190, freqEnd: 40, duration: 0.5, type: 'sawtooth', volume: 0.12, delay: 0.04 });
+            },
+            rainDrop: (delay) => {
+                playTone({ freqStart: 1300 + Math.random() * 500, freqEnd: 650, duration: 0.11, type: 'sine', volume: 0.08, delay });
+            },
+            click: () => {
+                // Gerçek bir mouse tık sesi: melodik ton yok, sadece çok kısa ve keskin
+                // iki katmanlı gürültü darbesi - alçak frekanslı "gövde" + yüksek frekanslı "tık".
+                // Atak neredeyse anlık (1ms) ki gerçek bir buton tıkırtısı gibi sert çıksın.
+                playNoiseBurst({ duration: 0.014, volume: 0.32, filterFreq: 1500, attack: 0.001 });
+                playNoiseBurst({ duration: 0.008, volume: 0.28, filterFreq: 6500, delay: 0.001, attack: 0.001 });
+            },
+            celebration: () => {
+                // Alkış: ~2.6 saniye boyunca rastgele zamanlanmış kısa gürültü darbeleri (el çırpma efekti).
+                const clapCount = 46;
+                const clapDuration = 2.6;
+                for (let i = 0; i < clapCount; i++) {
+                    const delay = Math.random() * clapDuration;
+                    const vol = 0.05 + Math.random() * 0.06;
+                    playNoiseBurst({ duration: 0.045 + Math.random() * 0.045, volume: vol, filterFreq: 2200 + Math.random() * 3200, delay });
+                }
+                // Kısa bir zafer melodisi (fanfare) üstüne binsin.
+                const notes = [523.25, 659.25, 783.99, 1046.5];
+                notes.forEach((freq, i) => {
+                    playTone({ freqStart: freq, duration: 0.28, type: 'triangle', volume: 0.1, delay: i * 0.13 });
+                });
+            }
+        };
+
+        // Normal buton/etiket/filtre tıklamalarında hafif bir "click" sesi çal.
+        // Su ikonlarının (dağ/damla/dalga/şimşek/bulut) kendi özel sesleri olduğu için hariç tutulur.
+        document.addEventListener('click', function (e) {
+            const target = e.target.closest('button, label.upload-btn, .filter-item');
+            if (!target) return;
+            if (target.closest('.hydro-emojis') || target.closest('.rain-stage')) return;
+            soundEffects.click();
+        }, true);
+
         // Dağ ikonuna tıklayınca: dağın içinden bir su akışı çıkıp ekranın en altına
         // kadar iner ve orada söner.
         function triggerMountainFlow(el) {
+            soundEffects.mountain();
             const rect = el.getBoundingClientRect();
             const startX = rect.left + rect.width / 2;
             const startY = rect.top + rect.height * 0.55;
@@ -914,6 +1238,7 @@
 
         // Damla ikonuna tıklayınca: damla en aşağıya kadar düşer ve orada patlar.
         function triggerDropFall(el) {
+            soundEffects.drop();
             const rect = el.getBoundingClientRect();
             const startX = rect.left + rect.width / 2 - 11;
             const startY = rect.top;
@@ -942,6 +1267,7 @@
 
         // Dalga (şelale) ikonuna tıklayınca: ekranı 3 saniyeliğine su bassın.
         function triggerFlood() {
+            soundEffects.flood();
             const flood = document.createElement('div');
             flood.className = 'screen-flood';
             flood.style.animation = 'floodRise 3s ease-in-out forwards';
@@ -952,6 +1278,7 @@
         // Şimşek ikonuna tıklayınca: ikonun kendi salınım animasyonu duraklar,
         // ekranda kısa bir şimşek çakması efekti oynar, sonra animasyon devam eder.
         function triggerLightningFlash(el) {
+            soundEffects.lightning();
             el.classList.add('lightning-paused');
             const flash = document.createElement('div');
             flash.className = 'lightning-flash';
@@ -991,6 +1318,7 @@
                 const delay = Math.random() * 1.4;
                 const duration = 0.9 + Math.random() * 0.7;
                 maxArrival = Math.max(maxArrival, delay + duration);
+                soundEffects.rainDrop(delay + duration * 0.92);
 
                 setTimeout(() => {
                     requestAnimationFrame(() => {
@@ -1194,10 +1522,43 @@
             updateDashboard();
         }
 
+        // Results.csv VE LBO/WHBO input dosyası birlikte yüklendiğinde 3 saniyelik konfeti + alkış kutlaması.
+        function triggerConfettiCelebration() {
+            const colors = ['#1b75bc', '#38bdf8', '#10b981', '#f59e0b', '#ef4444', '#a855f7', '#facc15'];
+            const pieceCount = 110;
+            const container = document.createElement('div');
+            container.className = 'confetti-container';
+            document.body.appendChild(container);
+
+            for (let i = 0; i < pieceCount; i++) {
+                const piece = document.createElement('span');
+                piece.className = 'confetti-piece';
+                piece.style.background = colors[Math.floor(Math.random() * colors.length)];
+                piece.style.left = (Math.random() * 100) + 'vw';
+                piece.style.width = (6 + Math.random() * 6) + 'px';
+                piece.style.height = (10 + Math.random() * 8) + 'px';
+                piece.style.animationDuration = (2.4 + Math.random() * 1.2) + 's';
+                piece.style.animationDelay = (Math.random() * 0.4) + 's';
+                container.appendChild(piece);
+            }
+
+            soundEffects.celebration();
+            setTimeout(() => container.remove(), 3200);
+        }
+
+        function checkBothFilesLoadedAndCelebrate() {
+            if (allData && allData.length > 0 && inputFileData && inputFileData.length > 0) {
+                triggerConfettiCelebration();
+            }
+        }
+
         function handleFile(input) {
             const file = input.files[0];
             if (!file) return;
-            document.getElementById('fileNameDisplay').innerText = file.name;
+            const fileNameEl = document.getElementById('fileNameDisplay');
+            fileNameEl.innerText = file.name;
+            fileNameEl.classList.remove('upload-status--pending');
+            fileNameEl.classList.add('upload-status--success');
             const reader = new FileReader();
             reader.onload = function(e) {
                 allData = parseCSV(e.target.result);
@@ -1211,6 +1572,7 @@
                 buildTimeFilterOptions();
                 applyTimeFilter();
                 buildSidebarFilters();
+                checkBothFilesLoadedAndCelebrate();
             };
             reader.readAsText(file, 'UTF-8');
         }
@@ -1219,11 +1581,15 @@
         function handleInputFile(input) {
             const file = input.files[0];
             if (!file) return;
-            document.getElementById('inputFileNameDisplay').innerText = file.name;
+            const inputFileEl = document.getElementById('inputFileNameDisplay');
+            inputFileEl.innerText = file.name;
+            inputFileEl.classList.remove('upload-status--optional');
+            inputFileEl.classList.add('upload-status--success');
             const reader = new FileReader();
             reader.onload = function(e) {
                 inputFileData = parseCSV(e.target.result);
                 renderInputsTable();
+                checkBothFilesLoadedAndCelebrate();
             };
             reader.readAsText(file, 'UTF-8');
         }
@@ -1312,16 +1678,27 @@
             return total;
         }
 
+        // SRG (HCO) ve MNG (KSK) için ana üretime eklenen ikincil ünite miktarı.
+        // Eff-price oranı (SFC / toplam üretim) hesaplanırken bu pay da toplam üretime dahil edilmeli,
+        // yoksa SRG/MNG için oran (ve dolayısıyla missed fiyatlar) hatalı çıkar.
+        function getExtraProduction(row, pp) {
+            if (pp === "SRG") return parseFloat(row["HCO"]) || parseFloat(row["hco"]) || 0;
+            if (pp === "MNG") return parseFloat(row["KSK"]) || parseFloat(row["ksk"]) || 0;
+            return 0;
+        }
+
         function calculateDynamicEffPrice(row, pp) {
             const ptf = parseFloat(row['PTF']) || parseFloat(row['ptf']) || 0;
             const sfcPrice = parseFloat(row['SFC_PRICE']) || parseFloat(row['sfc_price']) || 0;
             const sfcQtyKey = pp + '_SFC';
             let sfcQty = parseFloat(row[sfcQtyKey]);
-            const capacity = plantCapacities[pp] || 100; 
+            // Payda artık sabit nominal kapasite değil, o saatteki gerçek toplam üretim
+            // (BASE + SFC, SRG/MNG için HCO/KSK dahil) - CSV'deki gerçek EFF_PRICE ile birebir eşleşir.
+            const totalProd = getSantralProduction(row, pp);
 
             let sfcContribution = 0;
-            if (!isNaN(sfcQty)) {
-                sfcContribution = sfcPrice * (sfcQty / capacity);
+            if (!isNaN(sfcQty) && totalProd > 0) {
+                sfcContribution = sfcPrice * (sfcQty / totalProd);
             } else {
                 const ratio = embeddedRatios[pp] || 0;
                 sfcContribution = sfcPrice * ratio;
@@ -1465,11 +1842,30 @@
                 let dataSource = isRawInput ? inputFileData : rawData;
                 if (dataSource.length === 0) return;
 
+                // ÖNEMLİ: Ham WHBO/LBO girdi dosyasında "Selected"/"Spillage Case"/"{PP} Level" gibi
+                // kolonlar aslında farklı, birbirinden bağımsız Excel alt-tablolarının (PP, PP-1, PP-9,
+                // PP-10... gibi) satır bazında yan yana dökülmüş hali - Date/Hour ile hizalı değiller ve
+                // "{PP} Level" neredeyse tüm satırlarda boş çıkabiliyor. Bu yüzden gerçek saatlik
+                // Aktiflik/Seviye bilgisini, YÜKLÜYSE Results.csv'den (rawData) tarih+saat eşleştirerek
+                // çekiyoruz - bu çok daha güvenilir çünkü Results.csv'de her saat için gerçek
+                // {PP}_MODE ve {PP}_Level/{PP}_PreLevel değerleri var.
+                let resultsByKey = {};
+                if (rawData && rawData.length > 0) {
+                    rawData.forEach(row => {
+                        const d = row['Date'] || row['date'] || '';
+                        const h = String(row['Hour'] || row['hour'] || '0');
+                        if (!d) return;
+                        resultsByKey[`${d}_${h}`] = row;
+                    });
+                }
+                const hasResultsCrossRef = Object.keys(resultsByKey).length > 0;
+
                 // Ham girdi dosyasında "Selected" ve "PP-9"/"Spillage Case" satır bazlı değil,
-                // tüm dosya için geçerli global bilgilerdir (saatlik değil).
+                // tüm dosya için geçerli global bilgilerdir (saatlik değil) - sadece Results.csv
+                // yoksa (yani çapraz referans yapılamıyorsa) son çare olarak kullanılır.
                 let globalActiveRaw = false;
                 let globalSpillageRaw = false;
-                if (isRawInput) {
+                if (isRawInput && !hasResultsCrossRef) {
                     dataSource.forEach(row => {
                         const selVal = (row['Selected'] || '').toUpperCase().trim();
                         if (selVal === activePp) globalActiveRaw = true;
@@ -1496,18 +1892,26 @@
                     const goktas = isRawInput ? (parseFloat(row['Goktas']) || 0) : 0;
                     const inflow = isRawInput ? (parseFloat(row[activePp + ' Inf.']) || 0) : 0;
 
-                    const rawLevel = isRawInput
-                        ? (parseFloat(row[activePp + ' Level']) || 0)
-                        : (parseFloat(row[activePp + '_Level']) || 0);
-                    const levelMeter = rawLevel > 0 ? convertToMeters(rawLevel, activePp) : null;
+                    // Gerçek sonuç satırı varsa (Results.csv aynı tarih+saatte) önce onu kullan.
+                    const matchedResult = isRawInput ? resultsByKey[`${dateStr}_${hour}`] : row;
 
-                    let active = isRawInput ? globalActiveRaw : false;
-                    let spill = isRawInput ? globalSpillageRaw : false;
-                    if (!isRawInput) {
-                        const modeVal = (row[activePp + '_MODE'] || '').toUpperCase().trim();
+                    let rawLevel = 0;
+                    let active, spill;
+                    if (matchedResult) {
+                        rawLevel = parseFloat(matchedResult[activePp + '_Level']) || 0;
+                        const modeVal = (matchedResult[activePp + '_MODE'] || '').toUpperCase().trim();
                         active = modeVal !== "OFF" && modeVal !== "";
-                        spill = (parseFloat(row[activePp + '_Spill']) || 0) > 0;
+                        spill = (parseFloat(matchedResult[activePp + '_Spill']) || 0) > 0;
+                    } else if (isRawInput) {
+                        rawLevel = parseFloat(row[activePp + ' Level']) || 0;
+                        active = globalActiveRaw;
+                        spill = globalSpillageRaw;
+                    } else {
+                        rawLevel = 0;
+                        active = false;
+                        spill = false;
                     }
+                    const levelMeter = rawLevel > 0 ? convertToMeters(rawLevel, activePp) : null;
 
                     return { dateStr, hour, ts: getInputRowTimestamp(dateStr, hour), ptf, sfc, feke, goktas, inflow, levelMeter, active, spill };
                 }).filter(r => r !== null);
@@ -1515,10 +1919,29 @@
                 rows.sort((a, b) => a.ts - b.ts);
                 if (rows.length === 0) return;
 
-                // --- Üst özet kutusu: Start/End Date ve Start/End Level (tüm yüklü aralık) ---
+                // --- Üst özet kutusu: Start/End Date, Start/End Level, gerçekleşen çalışma saati,
+                // ve (varsa) WHBO girdi dosyasındaki hedef üretim/tolerans bilgisi ---
                 const levelRows = rows.filter(r => r.levelMeter !== null);
                 const startLevel = levelRows.length > 0 ? levelRows[0].levelMeter.toFixed(2) + " m" : "-";
                 const endLevel = levelRows.length > 0 ? levelRows[levelRows.length - 1].levelMeter.toFixed(2) + " m" : "-";
+                const hoursOperated = rows.filter(r => r.active).length;
+
+                // WHBO/LBO girdi dosyasında "PP-10"/"Generation"/"Tolerance" kolonlarından oluşan
+                // küçük bir hedef-üretim tablosu var (santral başına tek satır) - varsa göster.
+                let targetTileHtml = "";
+                if (isRawInput) {
+                    const targetRow = inputFileData.find(row => (row['PP-10'] || '').toUpperCase().trim() === activePp && row['Generation']);
+                    if (targetRow) {
+                        const genVal = parseFloat(targetRow['Generation']) || 0;
+                        const tolVal = parseFloat(targetRow['Tolerance']);
+                        const tolTxt = !isNaN(tolVal) ? ` (±%${(tolVal * 100).toFixed(0)})` : '';
+                        targetTileHtml = `
+                            <div class="inputs-summary-tile">
+                                <div class="summary-label">Hedef Üretim (Generation Target)</div>
+                                <div class="summary-value">${genVal.toLocaleString('tr-TR')} MWh${tolTxt}</div>
+                            </div>`;
+                    }
+                }
 
                 summaryBox.innerHTML = `
                     <div class="inputs-summary-tile">
@@ -1536,7 +1959,11 @@
                     <div class="inputs-summary-tile">
                         <div class="summary-label">${activePp} End Level</div>
                         <div class="summary-value">${endLevel}</div>
-                    </div>`;
+                    </div>
+                    <div class="inputs-summary-tile">
+                        <div class="summary-label">Çalışma Saati (Gerçekleşen)</div>
+                        <div class="summary-value">${hoursOperated} saat</div>
+                    </div>${targetTileHtml}`;
 
                 if (inputsGranularity === 'hourly') {
                     head.innerHTML = `
@@ -1647,8 +2074,8 @@
                     caughtMap[b] = {};
                     missedMap[b] = {};
                     uniqueDates.forEach(d => {
-                        caughtMap[b][d] = { prices: [], modes: [], volumes: [] };
-                        missedMap[b][d] = { prices: [], modes: [], volumes: [] };
+                        caughtMap[b][d] = { prices: [], modes: [], volumes: [], hours: [] };
+                        missedMap[b][d] = { prices: [], modes: [], volumes: [], hours: [] };
                         
                         const key = `${d}_B${b}`;
                         blockParams[key] = { sfcQty: 0, sfcProd: 0, hasData: false };
@@ -1662,11 +2089,42 @@
 
                     const sfcQtyVal = parseFloat(row[activePp + '_SFC']) || 0;
                     const sfcProdVal = parseFloat(row[activePp + '_BASE']) || 0;
+                    const extraVal = getExtraProduction(row, activePp);
 
                     if (blockParams[key] && sfcQtyVal > 0 && sfcProdVal > 0 && !blockParams[key].hasData) {
                         blockParams[key].sfcQty = sfcQtyVal;
                         blockParams[key].sfcProd = sfcProdVal;
+                        blockParams[key].extra = extraVal;
                         blockParams[key].hasData = true; 
+                    }
+                });
+
+                // Aynı tarihte SFC+BASE birlikte çalışan bir referans saat yoksa (çoğu blokta bu durum
+                // %69 oranında oluyor), o bloğun TÜM tarihler genelindeki tipik SFC/BASE kombinasyonuna
+                // düş (embeddedRatios'daki genel santral oranından çok daha isabetli çünkü bloğa özel).
+                let blockGlobalParams = {};
+                blocks.forEach(b => { blockGlobalParams[b] = null; });
+                rawData.forEach(row => {
+                    const b = row['Block'] || row['block'] || '1';
+                    const sfcQtyVal = parseFloat(row[activePp + '_SFC']) || 0;
+                    const sfcProdVal = parseFloat(row[activePp + '_BASE']) || 0;
+                    const extraVal = getExtraProduction(row, activePp);
+                    if (blockGlobalParams.hasOwnProperty(b) && !blockGlobalParams[b] && sfcQtyVal > 0 && sfcProdVal > 0) {
+                        blockGlobalParams[b] = { sfcQty: sfcQtyVal, sfcProd: sfcProdVal, extra: extraVal };
+                    }
+                });
+
+                // O blok, TÜM tarihlerde de hiç SFC+BASE birlikte çalışmamışsa (örn. KPR'de Block 5 gibi -
+                // hiçbir zaman gözlemlenmemiş bir kombinasyon), embeddedRatios'daki soyut/nominal orana
+                // düşmeden ÖNCE, aynı santralin BAŞKA herhangi bir blokta/tarihte kullandığı gerçek
+                // SFC/BASE kombinasyonunu kullan - bu, tamamen soyut bir orandan çok daha isabetlidir.
+                let plantGlobalParams = null;
+                rawData.forEach(row => {
+                    const sfcQtyVal = parseFloat(row[activePp + '_SFC']) || 0;
+                    const sfcProdVal = parseFloat(row[activePp + '_BASE']) || 0;
+                    const extraVal = getExtraProduction(row, activePp);
+                    if (!plantGlobalParams && sfcQtyVal > 0 && sfcProdVal > 0) {
+                        plantGlobalParams = { sfcQty: sfcQtyVal, sfcProd: sfcProdVal, extra: extraVal };
                     }
                 });
 
@@ -1674,6 +2132,7 @@
                     const d = row['Date'] || row['date'] || '';
                     const b = row['Block'] || row['block'] || '1';
                     const key = `${d}_B${b}`;
+                    const hourVal = row['Hour'] || row['hour'] || '0';
 
                     const knd = getSantralProduction(row, activePp);
                     const ptf = parseFloat(row['PTF']) || parseFloat(row['ptf']) || 0;
@@ -1698,6 +2157,7 @@
                             caughtMap[b][d].prices.push(dynCalculatedEffPrice);
                             caughtMap[b][d].modes.push(displayMode);
                             caughtMap[b][d].volumes.push(knd); 
+                            caughtMap[b][d].hours.push(hourVal);
                             caughtVals.push(dynCalculatedEffPrice);
 
                             if (dailyCaughtTotals[d]) {
@@ -1718,8 +2178,22 @@
                         let virtualVolume = 0; 
 
                         if (blockParams[key] && blockParams[key].hasData) {
-                            missedEffPrice = ptf + (sfcPrice * (blockParams[key].sfcQty / blockParams[key].sfcProd));
-                            virtualVolume = blockParams[key].sfcProd; 
+                            const extra = blockParams[key].extra || 0;
+                            const blockTotalProd = blockParams[key].sfcQty + blockParams[key].sfcProd + extra;
+                            missedEffPrice = ptf + (sfcPrice * (blockParams[key].sfcQty / blockTotalProd));
+                            virtualVolume = blockParams[key].sfcProd + extra; 
+                        } else if (blockGlobalParams[b]) {
+                            const gp = blockGlobalParams[b];
+                            const gpExtra = gp.extra || 0;
+                            const gpTotalProd = gp.sfcQty + gp.sfcProd + gpExtra;
+                            missedEffPrice = ptf + (sfcPrice * (gp.sfcQty / gpTotalProd));
+                            virtualVolume = gp.sfcProd + gpExtra;
+                        } else if (plantGlobalParams) {
+                            const pg = plantGlobalParams;
+                            const pgExtra = pg.extra || 0;
+                            const pgTotalProd = pg.sfcQty + pg.sfcProd + pgExtra;
+                            missedEffPrice = ptf + (sfcPrice * (pg.sfcQty / pgTotalProd));
+                            virtualVolume = pg.sfcProd + pgExtra;
                         } else {
                             const ratio = embeddedRatios[activePp] || 0;
                             missedEffPrice = ptf + (sfcPrice * ratio);
@@ -1729,6 +2203,7 @@
                             missedMap[b][d].prices.push(missedEffPrice);
                             missedMap[b][d].modes.push("Off"); 
                             missedMap[b][d].volumes.push(virtualVolume);
+                            missedMap[b][d].hours.push(hourVal);
                             missedVals.push(missedEffPrice);
 
                             if (dailyMissedTotals[d]) {
@@ -1745,10 +2220,73 @@
                     }
                 });
 
-                let minCaught = caughtVals.length > 0 ? Math.min(...caughtVals) : 0;
-                let maxCaught = caughtVals.length > 0 ? Math.max(...caughtVals) : 1;
-                let minMissed = missedVals.length > 0 ? Math.min(...missedVals) : 0;
-                let maxMissed = missedVals.length > 0 ? Math.max(...missedVals) : 1;
+                // Min/Max hesabı artık ham saatlik veriden değil, tablo hücrelerinde GERÇEKTEN
+                // gösterilen ortalama değerlerden (generateTableHTML'deki avgPrice ile birebir aynı
+                // mantık) yapılıyor - böylece "Teyit Noktası" tablodaki rakamlarla birebir tutuyor.
+                function getDominantModeFromList(modes) {
+                    const modeCounts = {};
+                    (modes || []).forEach(m => { if (m) modeCounts[m] = (modeCounts[m] || 0) + 1; });
+                    if (modeCounts["Base"]) return "Base";
+                    const keys = Object.keys(modeCounts);
+                    return keys.length > 0 ? keys.reduce((a, b) => modeCounts[a] > modeCounts[b] ? a : b) : "-";
+                }
+
+                // Bir "missed" kaydını insan-okunur şekilde anlatır. Aynı blok+tarih hücresinde başka
+                // saatlerde çalışılmış olabileceğini (kısmi çalışma) netleştirir - "çalışılmadı" ifadesi
+                // yanıltıcı olmasın diye hangi SAATLERDE çalışılmadığını açıkça belirtir.
+                function describeMissedEntry(e) {
+                    const hoursTxt = (e.hours || []).slice().sort((a, b) => a - b).join(', ');
+                    if (e.alsoCaughtSameDay) {
+                        const caughtHoursTxt = (e.caughtHoursSameDay || []).slice().sort((a, b) => a - b).join(', ');
+                        return `${e.date} tarihinde SAAT ${hoursTxt}'te çalışılmadı (aynı blok o gün saat ${caughtHoursTxt}'te ${e.caughtModeSameDay} modunda ${e.caughtPriceSameDay.toFixed(0)} TL/MWh ile çalışmış - yani blok o gün KISMEN çalışmış)`;
+                    }
+                    return `${e.date} tarihinde (saat ${hoursTxt}) hiç çalışılmadı`;
+                }
+
+                let caughtCellAvgs = [];
+                let missedCellAvgs = [];
+                // Blok bazlı detaylı döküm: her blok için hangi tarihlerde/fiyatlarla Caught (ve modu),
+                // hangi tarihlerde/fiyatlarla Missed olduğu - uyarı tetiklendiğinde bu detayı gösterebilmek için.
+                let blockBreakdown = {};
+                blocks.forEach(b => {
+                    blockBreakdown[b] = { caught: [], missed: [] };
+                    uniqueDates.forEach(d => {
+                        const cc = caughtMap[b] ? caughtMap[b][d] : null;
+                        const mc = missedMap[b] ? missedMap[b][d] : null;
+                        const hasCaughtSameCell = !!(cc && cc.prices && cc.prices.length > 0);
+                        const hasMissedSameCell = !!(mc && mc.prices && mc.prices.length > 0);
+
+                        if (hasCaughtSameCell) {
+                            const avg = cc.prices.reduce((acc, cur) => acc + cur, 0) / cc.prices.length;
+                            caughtCellAvgs.push(avg);
+                            blockBreakdown[b].caught.push({
+                                date: d, price: avg, mode: getDominantModeFromList(cc.modes),
+                                hours: cc.hours.slice()
+                            });
+                        }
+                        if (hasMissedSameCell) {
+                            const avgM = mc.prices.reduce((acc, cur) => acc + cur, 0) / mc.prices.length;
+                            missedCellAvgs.push(avgM);
+                            blockBreakdown[b].missed.push({
+                                date: d, price: avgM, hours: mc.hours.slice(),
+                                // Aynı blok+tarih hücresinde HEM çalışılan HEM çalışılmayan saatler olabilir
+                                // (ör. bir blok o gün 3 saat sürüyorsa, 2 saati Base ile çalışıp 1 saati OFF
+                                // kalabilir). Bu durumda "çalışılmadı" demek yanıltıcı olur - o yüzden bu bilgiyi
+                                // de taşıyoruz ki mesajda netleştirebilelim.
+                                alsoCaughtSameDay: hasCaughtSameCell,
+                                caughtHoursSameDay: hasCaughtSameCell ? cc.hours.slice() : [],
+                                caughtPriceSameDay: hasCaughtSameCell ? (cc.prices.reduce((acc, cur) => acc + cur, 0) / cc.prices.length) : null,
+                                caughtModeSameDay: hasCaughtSameCell ? getDominantModeFromList(cc.modes) : null
+                            });
+                        }
+                    });
+                });
+
+
+                let minCaught = caughtCellAvgs.length > 0 ? Math.min(...caughtCellAvgs) : 0;
+                let maxCaught = caughtCellAvgs.length > 0 ? Math.max(...caughtCellAvgs) : 1;
+                let minMissed = missedCellAvgs.length > 0 ? Math.min(...missedCellAvgs) : 0;
+                let maxMissed = missedCellAvgs.length > 0 ? Math.max(...missedCellAvgs) : 1;
 
                 function get3ColorGradientStyle(val, minVal, maxVal) {
                     if (val <= 0 || minVal === maxVal) return "";
@@ -1892,6 +2430,102 @@
 
                 document.getElementById('caughtMatrixTable').innerHTML = generateTableHTML(caughtMap, minCaught, maxCaught, dailyCaughtTotals, blockCaughtTotals, grandCaughtTotal);
                 document.getElementById('missedMatrixTable').innerHTML = generateTableHTML(missedMap, minMissed, maxMissed, dailyMissedTotals, blockMissedTotals, grandMissedTotal);
+
+                // Teyit noktası: artık GLOBAL min/max yerine BLOK BAZINDA kontrol ediliyor.
+                // Çünkü farklı bloklar farklı türbin/ünite kombinasyonlarını temsil ediyor - birinin
+                // Base'i ile diğerinin Missed'ini karşılaştırmak elma-armut kıyası olur. Bu yüzden her
+                // blok kendi içinde (kendi Min Caught'ı vs kendi Max Missed'i) kontrol ediliyor.
+                // %5 üzerinde bir fark varsa: o blokta Base modu çalışılmış mı bakılıyor, çalışılmışsa
+                // Base'in çalışıldığı tarih/fiyatlar ile kaçırılan en yüksek fiyat karşılaştırmalı gösteriliyor.
+                const MODEL_GAP_TOLERANCE = 0.05;
+                const minCaughtEl = document.getElementById('minCaughtValue');
+                const maxMissedEl = document.getElementById('maxMissedValue');
+                const noteEl = document.getElementById('checkpointNote');
+                if (minCaughtEl && maxMissedEl && noteEl) {
+                    const hasCaught = caughtCellAvgs.length > 0;
+                    const hasMissed = missedCellAvgs.length > 0;
+                    minCaughtEl.innerText = hasCaught ? `${minCaught.toFixed(0)} TL/MWh` : '-';
+                    maxMissedEl.innerText = hasMissed ? `${maxMissed.toFixed(0)} TL/MWh` : '-';
+
+                    noteEl.classList.remove('is-ok', 'is-warning', 'is-tolerance');
+
+                    let violations = [];
+                    blocks.forEach(b => {
+                        const bd = blockBreakdown[b];
+                        if (!bd || bd.caught.length === 0 || bd.missed.length === 0) return;
+
+                        const blockMinCaught = Math.min(...bd.caught.map(e => e.price));
+                        const worstMissed = bd.missed.reduce((a, c) => (c.price > a.price ? c : a));
+                        const threshold = blockMinCaught * (1 + MODEL_GAP_TOLERANCE);
+
+                        if (worstMissed.price > threshold) {
+                            const diffPct = blockMinCaught > 0 ? ((worstMissed.price - blockMinCaught) / blockMinCaught * 100) : 0;
+                            const baseEntries = bd.caught.filter(e => e.mode === 'Base');
+                            violations.push({
+                                block: b,
+                                blockMinCaught,
+                                worstMissed,
+                                diffPct,
+                                hasBase: baseEntries.length > 0,
+                                baseEntries,
+                                allCaught: bd.caught
+                            });
+                        }
+                    });
+
+                    // Genel Min Caught ve Genel Max Missed sayılarının HANGİ blok/tarihten geldiğini bul -
+                    // ihlal olmasa bile "o blokta şu tarihte şu fiyata çalışılmadı" detayını gösterebilmek için.
+                    let minCaughtSource = null, maxMissedSource = null;
+                    blocks.forEach(b => {
+                        const bd = blockBreakdown[b];
+                        if (!bd) return;
+                        bd.caught.forEach(e => {
+                            if (!minCaughtSource && Math.abs(e.price - minCaught) < 0.5) {
+                                minCaughtSource = { block: b, date: e.date, price: e.price, mode: e.mode };
+                            }
+                        });
+                        bd.missed.forEach(e => {
+                            if (!maxMissedSource && Math.abs(e.price - maxMissed) < 0.5) {
+                                maxMissedSource = Object.assign({ block: b }, e);
+                            }
+                        });
+                    });
+
+                    if (!hasCaught || !hasMissed) {
+                        noteEl.classList.add('is-ok');
+                        noteEl.innerHTML = 'Karşılaştırma için hem yakalanan hem kaçırılan veri gerekiyor.';
+                    } else if (violations.length === 0) {
+                        // Asıl teyit kriteri blok-bazlı kontrolden geçti (hiçbiri %5'i aşmadı).
+                        // Buradaki Genel Min Caught / Genel Max Missed farklı bloklardan gelebileceği için
+                        // (elma-armut olabileceğinden) bu sayı %5 toleransına göre AYRICA değerlendirilmez -
+                        // sadece bilgi amaçlıdır, bu yüzden burada her zaman "Tutarlı" gösterilir.
+                        noteEl.classList.add('is-ok');
+                        const minSrcTxt = minCaughtSource ? `Block B${minCaughtSource.block}, ${minCaughtSource.date} (${minCaughtSource.mode})` : '-';
+                        const maxSrcTxt = maxMissedSource ? `Block B${maxMissedSource.block}: ${describeMissedEntry(maxMissedSource)}` : '-';
+                        noteEl.innerHTML = `✓ Tutarlı: hiçbir blokta kendi Min Caught'ını %${(MODEL_GAP_TOLERANCE * 100).toFixed(0)} toleransın üzerinde aşan bir Max Missed yok.<br>` +
+                            `→ Genel Min Caught: <b>${minCaught.toFixed(0)} TL/MWh</b> (${minSrcTxt} fiyatla yakalanmış)<br>` +
+                            `→ Genel Max Missed: <b>${maxMissed.toFixed(0)} TL/MWh</b> (${maxSrcTxt})<br>` +
+                            `Bu iki değer farklı bloklardan geldiği için doğrudan karşılaştırılabilir değildir.`;
+                    } else {
+                        noteEl.classList.add('is-warning');
+                        let html = `<div class="checkpoint-violation-title">⚠️ ${violations.length} blokta, kendi Min Caught'ından %${(MODEL_GAP_TOLERANCE * 100).toFixed(0)} toleransın üzerinde bir Max Missed tespit edildi:</div>`;
+                        violations.sort((a, b) => b.diffPct - a.diffPct);
+                        violations.forEach(v => {
+                            html += `<div class="checkpoint-violation-block">`;
+                            html += `<b>Block B${v.block}</b> — Min Caught: ${v.blockMinCaught.toFixed(0)} TL/MWh, Max Missed: ${v.worstMissed.price.toFixed(0)} TL/MWh (${v.worstMissed.date}) → <b>%${v.diffPct.toFixed(1)} fark</b>`;
+                            if (v.hasBase) {
+                                const baseList = v.baseEntries.map(e => `${e.date}: ${e.price.toFixed(0)} TL/MWh`).join(', ');
+                                html += `<br>→ Bu blokta <b>Base modu çalışılmış</b>. Base çalışılan tarih/fiyatlar: ${baseList}.`;
+                            } else {
+                                const sfcList = v.allCaught.map(e => `${e.date}: ${e.price.toFixed(0)} TL/MWh (${e.mode})`).join(', ');
+                                html += `<br>→ Bu blokta hiç Base modu çalışılmamış (sadece Sfc). Çalışılan tarih/fiyatlar: ${sfcList}.`;
+                            }
+                            html += `<br>→ Çalışılmayan (missed) en yüksek fiyat: <b>${v.worstMissed.price.toFixed(0)} TL/MWh</b> — ${describeMissedEntry(v.worstMissed)}.`;
+                            html += `</div>`;
+                        });
+                        noteEl.innerHTML = html;
+                    }
+                }
             } catch (matrixErr) {
                 console.error("Matris tablosu motor hatası:", matrixErr);
             }
